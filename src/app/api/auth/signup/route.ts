@@ -1,24 +1,24 @@
 import { NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs'; // Or any other hashing library
-import Prisma from '../../../../lib/prisma'; // Adjust the import based on your prisma setup
-
+import prisma from '../../../../lib/prisma'; 
 export async function POST(req: Request) {
-  const body = await req.json();
-  const { username, password, email } = body;
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  // Save the new user to the database
+  const request = await req.json()
+  if(!req.body){
+    return 
+  }
+  const formData = JSON.parse(request.body);
+  if(!(formData.username)){
+    return NextResponse.json({ error: "User creation failed" }, { status: 400 });
+  }
   try {
-    const user = await Prisma.user.create({
-      data: {
-        username,
-        password: hashedPassword,
-        email
-      },
+    console.log(1)
+    const user = await prisma.user.create({
+      data: formData
     });
+    console.log(formData)
     return NextResponse.json({ user });
   } catch (error) {
+    // @ts-ignore
+    console.error(error.message)
     return NextResponse.json({ error: "User creation failed" }, { status: 400 });
   }
 }

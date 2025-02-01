@@ -10,8 +10,11 @@
   },
   "dependencies": {
     "@prisma/client": "^6.3.0",
+    "@types/bcrypt": "^5.0.2",
     "@types/bcryptjs": "^2.4.6",
+    "axios": "^1.7.9",
     "bcrypt": "^5.1.1",
+    "bcryptjs": "^2.4.3",
     "codeforces-api": "^1.0.3",
     "leetcode-api": "^1.1.0",
     "leetcode-query": "^1.2.3",

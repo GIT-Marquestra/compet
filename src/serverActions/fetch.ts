@@ -1,5 +1,6 @@
 "use server"
 import { LeetCode } from "leetcode-query";
+// @ts-ignore
 import Codeforces from 'codeforces-api'
 export async function fetchLatestSubmissionsLeetCode(){
     try {
@@ -22,5 +23,4 @@ export async function fetchLatestSubmissionsCodeForces(){
         console.log("Error: ", error)
         return null
     }
-
 } 

@@ -15,19 +15,32 @@ datasource db {
 
 model User {
   id                  String              @id @default(uuid())
-  username            String      
+  username            String              @unique
   email               String              @unique
   password            String
+  leetcodeUsername    String              @unique
+  codeforcesUsername  String              @unique
+  section             String
+  enrollmentNum       String              @unique
   profileUrl          String?  
   groupId             String?     
   post                String?
-  group               Group?               @relation(fields: [groupId], references: [id])
+  group               Group?              @relation(fields: [groupId], references: [id])
   submission          Submission[]
 }
+
+// username:'',
+// email:'',
+// password:'',
+// leetcodeUsername:'',
+// codeforcesUsername:'',
+// enrollmentNum:'',
+// section:''
 
 model Group {
   id                  String              @id @default(uuid())
   name                String              @unique
+  coordinator         String              @unique
   coordinatorId       String
   member              User[]          
 }
@@ -40,10 +53,10 @@ model Contest {
 }
 
 model Submission {
-  id                   String              @id @default(uuid())
+  id                   String             @id @default(uuid())
   userId               String
   questionUrl          String
   contestId            Int
-  user                 User                @relation(fields: [userId], references: [id])
-  contest              Contest             @relation(fields: [contestId], references: [id])
+  user                 User               @relation(fields: [userId], references: [id])
+  contest              Contest            @relation(fields: [contestId], references: [id])
 }

@@ -1,0 +1,49 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  String              @id @default(uuid())
+  username            String      
+  email               String              @unique
+  password            String
+  profileUrl          String?  
+  groupId             String?     
+  post                String?
+  group               Group?               @relation(fields: [groupId], references: [id])
+  submission          Submission[]
+}
+
+model Group {
+  id                  String              @id @default(uuid())
+  name                String              @unique
+  coordinatorId       String
+  member              User[]          
+}
+
+model Contest {
+  id                  Int                 @id @default(autoincrement())
+  questionUrl         String[]      
+  groupLeaderboard    String[]
+  submission          Submission[]
+}
+
+model Submission {
+  id                   String              @id @default(uuid())
+  userId               String
+  questionUrl          String
+  contestId            Int
+  user                 User                @relation(fields: [userId], references: [id])
+  contest              Contest             @relation(fields: [contestId], references: [id])
+}

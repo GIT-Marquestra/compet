@@ -1,12 +1,13 @@
 "use client"
-import { fetchLatestSubmissionsLeetCode } from '@/serverActions/fetch'
+import { fetchLatestSubmissionsCodeForces, fetchLatestSubmissionsLeetCode } from '@/serverActions/fetch'
 import React, { useState } from 'react'
 
 function CallFetchButton() {
   const [userStats, setUserStats] = useState()
   const getFunc = async () => {
     console.log("hi")
-    const stats = await fetchLatestSubmissionsLeetCode()
+    const stats = await fetchLatestSubmissionsCodeForces('Abhi_Verma2678')
+    console.log(2)
     if(stats !== null){
       // @ts-ignore
       setUserStats(stats)
@@ -17,13 +18,14 @@ function CallFetchButton() {
       <button onClick={()=>getFunc()}>Fetch</button>
       <div>
           {/* @ts-ignore */}
-          {userStats?.recentSubmissionList.map((p: Object) => (
+          
+          {userStats?.map((p: any) => (
             //@ts-ignore
-            <div key={p.timestamp} className='border-2 border-red-600'>
+            <div key={p.id} className='border-red-500 border-2'>
               {/* @ts-ignore */}
-              <span>{p.titleSlug}</span>
+              <span>{p.problem.name}</span>
               {/* @ts-ignore */}
-              <span>{p.statusDisplay}</span>
+              <span>{p.verdict}</span>
             </div>
           ))}
       </div>

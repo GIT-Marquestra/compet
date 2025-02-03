@@ -48,7 +48,6 @@ function Signup() {
       return 
     }
     
-    
     try {
       const response = await axios.post("/api/auth/signup", {
         headers: {

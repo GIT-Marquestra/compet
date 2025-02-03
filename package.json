@@ -16,6 +16,7 @@
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
     "codeforces-api": "^1.0.3",
+    "codeforces-api-ts": "^3.0.1",
     "leetcode-api": "^1.1.0",
     "leetcode-query": "^1.2.3",
     "next": "15.1.6",

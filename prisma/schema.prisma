@@ -29,14 +29,6 @@ model User {
   submission          Submission[]
 }
 
-// username:'',
-// email:'',
-// password:'',
-// leetcodeUsername:'',
-// codeforcesUsername:'',
-// enrollmentNum:'',
-// section:''
-
 model Group {
   id                  String              @id @default(uuid())
   name                String              @unique
@@ -47,9 +39,21 @@ model Group {
 
 model Contest {
   id                  Int                 @id @default(autoincrement())
-  questionUrl         String[]      
+  questions           Question[]          @relation("ContestQuestions")
   groupLeaderboard    String[]
-  submission          Submission[]
+  submission          Submission[] 
+  createdAt           DateTime            @default(now())
+}
+
+model Question {
+  id                  String              @id @default(uuid())
+  leetcodeUrl         String              
+  codeforcesUrl       String             
+  difficulty          String
+  points              Int
+  tags                String[]
+  slug                String
+  contests            Contest[]            @relation("ContestQuestions")
 }
 
 model Submission {

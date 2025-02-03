@@ -1,16 +1,18 @@
 import { NextResponse } from 'next/server';
-import prisma from '../../../../lib/prisma'; 
+import prisma from '../../../lib/prisma'; 
 export async function POST(req: Request) {
   const request = await req.json()
   if(!req.body){
     return 
   }
+  console.log(request)
   const formData = JSON.parse(request.body);
+  console.log('formData: ', formData)
   if(!(formData.username)){
     return NextResponse.json({ error: "User creation failed" }, { status: 400 });
   }
   try {
-    const user = await prisma.user.create({
+    const user = await prisma.contest.create({
       data: formData
     });
     console.log(formData)

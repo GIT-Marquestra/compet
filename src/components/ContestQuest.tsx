@@ -1,66 +1,37 @@
 "use client"
 import { fetchLatestSubmissionsCodeForces, fetchLatestSubmissionsLeetCode } from '@/serverActions/fetch'
+import { fetchTestQuestions } from '@/serverActions/fetchTestQuestions';
+import { Difficulty } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 import Link from 'next/link'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
-interface Quest {
-    id: number;
-    url: string;
-    platform: string,
-    name: string;
-    solved: boolean;
-}
+
 
 function ContestQuest() {
     const [resLeet, setResLeet] = useState('')
     const [resCodef, setResCodef] = useState('')
-    const [questions, setQuestions] = useState<Quest[]>([{
-        id: 0,
-        url:'',
-        platform:'',
-        name: '',
-        solved: false
+    const [score, setScore] = useState(0)
+    const [questions, setQuestions] = useState<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        leetcodeUrl: string | null;
+        codeforcesUrl: string | null;
+        difficulty: Difficulty;
+        points: number;
+        slug: string;
+    }[]>([]);
 
-    }])
+    useEffect(() => {
+        async function func(){
+            const testQuestions = await fetchTestQuestions()
+            setQuestions(testQuestions)
+        }
+        func()
+    }, [])
     
-    const testQuestions: Quest[] = [
-        {
-            id: 1,
-            platform: 'Leetcode',
-            url: "https://leetcode.com/problems/find-pivot-index/description/",
-            name: "find-pivot-index",
-            solved: false
-        },
-        {
-            id: 2,
-            platform: 'Leetcode',
-            url: "https://leetcode.com/problems/find-the-highest-altitude/description/",
-            name: "find-the-highest-altitude",
-            solved: false
-        },
-        {
-            id: 3,
-            platform: 'Leetcode',
-            url: "https://leetcode.com/problems/running-sum-of-1d-array/description/",
-            name: "running-sum-of-1d-array",
-            solved: false
-        },
-        {
-            id: 4,
-            platform: 'Leetcode',
-            url: "https://leetcode.com/problems/find-the-highest-altitude/description/",
-            name: "find-the-highest-altitude",
-            solved: false
-        },
-        {
-            id: 5,
-            platform: 'Leetcode',
-            url: "https://leetcode.com/problems/continuous-subarray-sum/description/",
-            name: "continuous-subarray-sum",
-            solved: false
-        },
-    ]
+    
 
     const handleVerify = async (platform: string, problemName: string) => {
         if(platform === "Leetcode"){
@@ -68,12 +39,12 @@ function ContestQuest() {
             if(!(res && res.recentSubmissionList)) return
             console.log(res.recentSubmissionList)
             
-            const question = res.recentSubmissionList.find((p) => p.titleSlug === problemName)
+            const question = res.recentSubmissionList.find((p) => p.titleSlug === problemName && p.statusDisplay === 'Accepted')
             if(question){
                 if(question.timestamp > resLeet){
                     setQuestions((prev) => (
                         prev.map((p) => (
-                            p.name === question.titleSlug ? {...p, solved: true} : p
+                            p.slug === question.titleSlug ? {...p, solved: true} : p
                         ))
                     ))
                 }
@@ -83,11 +54,11 @@ function ContestQuest() {
             const res = await fetchLatestSubmissionsCodeForces('Abhi_Verma2678')
             if(!res) return
             const question = res.find((p: any) => (p.problem.name === problemName))
-            if(question){
+            if(question && question.verdict === 'OK'){
                 if(question.creationTimeSeconds > resCodef){
                     setQuestions((prev) => (
                         prev.map((p) => (
-                            p.name === question.problem.name ? {...p, solved: true} : p
+                            p.slug === question.problem.name ? {...p, solved: true} : p
                         ))
                     ))
                 }

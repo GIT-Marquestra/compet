@@ -5,7 +5,12 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
     try {
-      const questions = await prisma.question.findMany();
+      const questions = await prisma.question.findMany({
+        include: {
+          questionTags: true, // Include related tags
+        },
+      });
+      console.log(questions[1])
       return NextResponse.json({ questions }, { status: 200 })
     } catch (error) {
     // @ts-ignore

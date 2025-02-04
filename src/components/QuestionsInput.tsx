@@ -6,10 +6,11 @@ import { useState } from "react";
 interface Question {
   leetcodeUrl: string;
   codeforcesUrl: string;
-  difficulty: "Beginner" | "Easy" | "Medium" | "Hard" | "VeryHard";
+  difficulty: "BEGINNER" | "EASY" | "MEDIUM" | "HARD" | "VERYHARD";
   points: number;
   tags: string[];
   slug: string;
+  platform: "Leetcode" | "Codeforces";
 }
 
 const extractSlug = (url: string, platform: "leetcode" | "codeforces") => {
@@ -24,11 +25,11 @@ const extractSlug = (url: string, platform: "leetcode" | "codeforces") => {
 };
 
 const difficultyPoints = {
-  Beginner: 20,
-  Easy: 40,
-  Medium: 80,
-  Hard: 120,
-  VeryHard: 140,
+  BEGINNER: 20,
+  EASY: 40,
+  MEDIUM: 80,
+  HARD: 120,
+  VERYHARD: 140,
 };
 
 const availableTags = ["PrefixSum", "TwoPointers", "BinarySearch", "DP", "Graph", "Sorting"];
@@ -42,10 +43,11 @@ export default function QuestionForm() {
       {
         leetcodeUrl: "",
         codeforcesUrl: "",
-        difficulty: "Beginner",
+        difficulty: "BEGINNER",
         points: 20,
         tags: [],
         slug: "",
+        platform: "Leetcode",
       },
     ]);
   };
@@ -55,13 +57,23 @@ export default function QuestionForm() {
       prevQuestions.map((q, i) => {
         if (i === index) {
           const updatedQuestion = { ...q, [field]: value };
-          if (field === "leetcodeUrl") {
+          
+          // Clear the other platform's URL when platform changes
+          if (field === "platform") {
+            updatedQuestion.leetcodeUrl = value === "Leetcode" ? updatedQuestion.leetcodeUrl : "";
+            updatedQuestion.codeforcesUrl = value === "Codeforces" ? updatedQuestion.codeforcesUrl : "";
+            updatedQuestion.slug = ""; // Reset slug on platform change
+          }
+          
+          // Update slug based on the active platform's URL
+          if (field === "leetcodeUrl" && updatedQuestion.platform === "Leetcode") {
             updatedQuestion.slug = extractSlug(value, "leetcode");
-          } else if (field === "codeforcesUrl") {
+          } else if (field === "codeforcesUrl" && updatedQuestion.platform === "Codeforces") {
             updatedQuestion.slug = extractSlug(value, "codeforces");
           } else if (field === "difficulty") {
             updatedQuestion.points = difficultyPoints[value as keyof typeof difficultyPoints];
           }
+          
           return updatedQuestion;
         }
         return q;
@@ -77,6 +89,7 @@ export default function QuestionForm() {
 
   const handleSubmit = async () => {
     try {
+      console.log("Sending request", questions)
       const response = await axios.post("/api/questionsInput", {
         headers: {
           "Content-Type": "application/json",
@@ -94,20 +107,35 @@ export default function QuestionForm() {
       <h2 className="text-xl font-bold mb-4">Create Contest Questions</h2>
       {questions.map((q, index) => (
         <div key={index} className="border p-3 mb-3">
-          <input
-            type="text"
-            placeholder="Leetcode URL"
-            value={q.leetcodeUrl}
-            onChange={(e) => updateQuestion(index, "leetcodeUrl", e.target.value)}
+          <select
+            value={q.platform}
+            onChange={(e) => updateQuestion(index, "platform", e.target.value)}
             className="border p-2 w-full mb-2"
-          />
-          <input
-            type="text"
-            placeholder="Codeforces URL"
-            value={q.codeforcesUrl}
-            onChange={(e) => updateQuestion(index, "codeforcesUrl", e.target.value)}
-            className="border p-2 w-full mb-2"
-          />
+          >
+            <option value="Leetcode">Leetcode</option>
+            <option value="Codeforces">Codeforces</option>
+          </select>
+
+          {q.platform === "Leetcode" && (
+            <input
+              type="text"
+              placeholder="Leetcode URL"
+              value={q.leetcodeUrl}
+              onChange={(e) => updateQuestion(index, "leetcodeUrl", e.target.value)}
+              className="border p-2 w-full mb-2"
+            />
+          )}
+          
+          {q.platform === "Codeforces" && (
+            <input
+              type="text"
+              placeholder="Codeforces URL"
+              value={q.codeforcesUrl}
+              onChange={(e) => updateQuestion(index, "codeforcesUrl", e.target.value)}
+              className="border p-2 w-full mb-2"
+            />
+          )}
+
           <select
             value={q.difficulty}
             onChange={(e) => updateQuestion(index, "difficulty", e.target.value)}
@@ -120,7 +148,6 @@ export default function QuestionForm() {
             ))}
           </select>
 
-          {/* Multi-select for tags */}
           <div className="border p-2 w-full mb-2">
             <label className="block mb-1">Tags</label>
             <div className="flex flex-wrap gap-2">

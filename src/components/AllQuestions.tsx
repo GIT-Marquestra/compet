@@ -7,7 +7,6 @@ interface Question {
   id: string;
   leetcodeUrl: string;
   codeforcesUrl: string;
-  difficulty: "Beginner" | "Easy" | "Medium" | "Hard" | "VeryHard";
   tags: string[];
   slug: string;
 }
@@ -16,6 +15,9 @@ export default function AllQuestions() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [selectedQuestions, setSelectedQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(false);
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
+  const [dateError, setDateError] = useState("");
 
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -31,13 +33,41 @@ export default function AllQuestions() {
   }, []);
 
   const addToTest = (question: Question) => {
-    setSelectedQuestions([...selectedQuestions, { ...question, difficulty: "Beginner" }]);
+    setSelectedQuestions([...selectedQuestions, { ...question }]);
   };
 
-  const updateDifficulty = (index: number, difficulty: Question["difficulty"]) => {
-    const updated = [...selectedQuestions];
-    updated[index].difficulty = difficulty;
-    setSelectedQuestions(updated);
+  const validateDates = () => {
+    if (!startTime || !endTime) {
+      setDateError("Please select both start and end times");
+      return false;
+    }
+
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+    const now = new Date();
+
+    if (start < now) {
+      setDateError("Start time cannot be in the past");
+      return false;
+    }
+
+    if (end <= start) {
+      setDateError("End time must be after start time");
+      return false;
+    }
+
+    setDateError("");
+    return true;
+  };
+
+  const formatDateForPrisma = (dateString: string) => {
+    const date = new Date(dateString);
+    // Get the user's timezone offset in minutes
+    const offset = date.getTimezoneOffset();
+    // Adjust the date by adding the offset (to convert to UTC)
+    const utcDate = new Date(date.getTime() - (offset * 60000));
+    // Return in ISO format that Prisma expects
+    return utcDate.toISOString();
   };
 
   const handleCreateTest = async () => {
@@ -46,11 +76,23 @@ export default function AllQuestions() {
       return;
     }
 
+    if (!validateDates()) {
+      return;
+    }
+
     setLoading(true);
     try {
-      const res = await axios.post("/api/createTest", { questions: selectedQuestions });
+      const testData = {
+        questions: selectedQuestions,
+        startTime: formatDateForPrisma(startTime),
+        endTime: formatDateForPrisma(endTime)
+      };
+
+      const res = await axios.post("/api/createTest", testData);
       alert("Test created successfully!");
-      setSelectedQuestions([]); 
+      setSelectedQuestions([]);
+      setStartTime("");
+      setEndTime("");
     } catch (error) {
       console.error("Error creating test:", error);
       alert("Failed to create test.");
@@ -68,7 +110,12 @@ export default function AllQuestions() {
           <div key={q.id} className="border p-3 mb-2 flex justify-between items-center">
             <div>
               <p className="font-semibold">{q.slug}</p>
-              <p>Tags: {q.tags.join(", ")}</p>
+              {/* @ts-ignore */}
+              <p>{q.difficulty}</p>
+              {/* @ts-ignore */}
+              <p>Tags: {q.questionTags.map((p) => (
+                <span className="mx-1">{p.name}</span>
+              ))}</p>
             </div>
             <button
               onClick={() => addToTest(q)}
@@ -80,6 +127,39 @@ export default function AllQuestions() {
         ))}
       </div>
 
+      <div className="border p-4 mb-5">
+        <h3 className="text-lg font-semibold mb-4">Test Schedule</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Start Time
+            </label>
+            <input
+              type="datetime-local"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+              className="border rounded p-2 w-full"
+              min={new Date().toISOString().slice(0, 16)}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              End Time
+            </label>
+            <input
+              type="datetime-local"
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
+              className="border rounded p-2 w-full"
+              min={startTime}
+            />
+          </div>
+          {dateError && (
+            <p className="text-red-500 text-sm">{dateError}</p>
+          )}
+        </div>
+      </div>
+
       <div className="border p-4">
         <h3 className="text-lg font-semibold">Selected Questions</h3>
         {selectedQuestions.length === 0 ? (
@@ -88,17 +168,6 @@ export default function AllQuestions() {
           selectedQuestions.map((q, index) => (
             <div key={q.id} className="border p-3 mb-2">
               <p className="font-semibold">{q.slug}</p>
-              <select
-                value={q.difficulty}
-                onChange={(e) => updateDifficulty(index, e.target.value as Question["difficulty"])}
-                className="border p-2 w-full mt-2"
-              >
-                <option value="Beginner">Beginner</option>
-                <option value="Easy">Easy</option>
-                <option value="Medium">Medium</option>
-                <option value="Hard">Hard</option>
-                <option value="VeryHard">Very Hard</option>
-              </select>
             </div>
           ))
         )}

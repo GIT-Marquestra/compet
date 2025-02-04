@@ -1,6 +1,12 @@
 "use client";
+
 import axios from "axios";
 import React, { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Form {
   username: string;
@@ -12,7 +18,7 @@ interface Form {
   section: string;
 }
 
-function Signup() {
+export default function Signup() {
   const [formdata, setFormData] = useState<Form>({
     username: "",
     email: "",
@@ -23,19 +29,15 @@ function Signup() {
     section: "",
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const arr = formdata.email.split('@')
-    if(!(arr[1] === 'nst.rishihood.edu.in')){
-      window.alert('Enter college Email')
+    if (!formdata.email.endsWith("@nst.rishihood.edu.in")) {
+      window.alert("Enter college Email");
       setFormData({
         username: "",
         email: "",
@@ -44,68 +46,70 @@ function Signup() {
         codeforcesUsername: "",
         enrollmentNum: "",
         section: "",
-      })
-      return 
-    }
-    
-    try {
-      const response = await axios.post("/api/auth/signup", {
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formdata),
       });
-      console.log(response)
-      // @ts-ignore
-      if (response.status === 200) {
-        window.alert("Signup successful!");
-      } 
+      return;
+    }
 
-      if(response.status === 400){
-        window.alert("Recheck your Inputs")
-      }
-
+    try {
+      const response = await axios.post("/api/auth/signup", formdata, {
+        headers: { "Content-Type": "application/json" },
+      });
+      if (response.status === 200) window.alert("Signup successful!");
+      else if (response.status === 400) window.alert("Recheck your Inputs");
     } catch (error) {
       console.error("Error:", error);
     }
   };
 
   return (
-    <div>
-      <h2>Signup</h2>
-      <form onSubmit={handleSubmit}>
-        <label>Username</label>
-        <input className="text-black" type="text" name="username" placeholder="Enter username" onChange={handleChange} required />
-
-        <label>Email</label>
-        <input className="text-black" type="email" name="email" placeholder="Enter email" onChange={handleChange} required />
-
-        <label>Password</label>
-        <input className="text-black" type="text" name="password" placeholder="Enter password" onChange={handleChange} required />
-
-        <label>Leetcode Username</label>
-        <input className="text-black" type="text" name="leetcodeUsername" placeholder="Enter Leetcode Username" onChange={handleChange} required />
-
-        <label>Codeforces Username</label>
-        <input className="text-black" type="text" name="codeforcesUsername" placeholder="Enter Codeforces Username" onChange={handleChange} required />
-
-        <label>Enrollment Number</label>
-        <input className="text-black" type="text" name="enrollmentNum" placeholder="Enter Enrollment Number" onChange={handleChange} required />
-
-        <label>Select your NST section</label>
-        <select name="section" onChange={handleChange} required>
-          <option value="">Select Section</option>
-          <option value="A">A</option>
-          <option value="B">B</option>
-          <option value="C">C</option>
-          <option value="D">D</option>
-          <option value="E">E</option>
-        </select>
-
-        <button type="submit">Submit</button>
-      </form>
+    <div className="flex items-center justify-center min-h-screen bg-black text-white">
+      <Card className="w-full max-w-md border border-gray-700 bg-black">
+        <CardHeader>
+          <CardTitle className="text-center text-white">Signup</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label>Username</Label>
+              <Input type="text" name="username" placeholder="Enter username" onChange={handleChange} required />
+            </div>
+            <div>
+              <Label>Email</Label>
+              <Input type="email" name="email" placeholder="Enter email" onChange={handleChange} required />
+            </div>
+            <div>
+              <Label>Password</Label>
+              <Input type="password" name="password" placeholder="Enter password" onChange={handleChange} required />
+            </div>
+            <div>
+              <Label>Leetcode Username</Label>
+              <Input type="text" name="leetcodeUsername" placeholder="Enter Leetcode Username" onChange={handleChange} required />
+            </div>
+            <div>
+              <Label>Codeforces Username</Label>
+              <Input type="text" name="codeforcesUsername" placeholder="Enter Codeforces Username" onChange={handleChange} required />
+            </div>
+            <div>
+              <Label>Enrollment Number</Label>
+              <Input type="text" name="enrollmentNum" placeholder="Enter Enrollment Number" onChange={handleChange} required />
+            </div>
+            <div>
+              <Label>Section</Label>
+              <Select onValueChange={(value) => setFormData({ ...formdata, section: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Section" />
+                </SelectTrigger>
+                <SelectContent>
+                  {['A', 'B', 'C', 'D', 'E'].map((sec) => (
+                    <SelectItem key={sec} value={sec}>{sec}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button type="submit" className="w-full bg-white text-black hover:bg-gray-300">Submit</Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
-
-export default Signup;

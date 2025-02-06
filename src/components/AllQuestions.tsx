@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 interface Question {
   id: string;
@@ -72,7 +73,7 @@ export default function AllQuestions() {
 
   const handleCreateTest = async () => {
     if (selectedQuestions.length === 0) {
-      alert("Please select at least one question to create a test.");
+      toast.error("Please select at least one question to create a test.");
       return;
     }
 
@@ -89,43 +90,21 @@ export default function AllQuestions() {
       };
 
       const res = await axios.post("/api/createTest", testData);
-      alert("Test created successfully!");
+      toast.success("Test created successfully!");
       setSelectedQuestions([]);
       setStartTime("");
       setEndTime("");
     } catch (error) {
       console.error("Error creating test:", error);
-      alert("Failed to create test.");
+      toast.error("Failed to create test.");
     }
     setLoading(false);
   };
 
   return (
+    
     <div className="p-5">
       <h2 className="text-xl font-bold mb-4">All Questions</h2>
-
-      <div className="border p-4 mb-5">
-        <h3 className="text-lg font-semibold">Available Questions</h3>
-        {questions.map((q) => (
-          <div key={q.id} className="border p-3 mb-2 flex justify-between items-center">
-            <div>
-              <p className="font-semibold">{q.slug}</p>
-              {/* @ts-ignore */}
-              <p>{q.difficulty}</p>
-              {/* @ts-ignore */}
-              <p>Tags: {q.questionTags.map((p) => (
-                <span className="mx-1">{p.name}</span>
-              ))}</p>
-            </div>
-            <button
-              onClick={() => addToTest(q)}
-              className="bg-blue-500 text-white px-3 py-1 rounded"
-            >
-              Add to Test
-            </button>
-          </div>
-        ))}
-      </div>
 
       <div className="border p-4 mb-5">
         <h3 className="text-lg font-semibold mb-4">Test Schedule</h3>
@@ -180,6 +159,31 @@ export default function AllQuestions() {
       >
         {loading ? "Creating Test..." : "Create Test"}
       </button>
+
+
+      <div className="border p-4 mb-5 mt-8">
+        <h3 className="text-lg font-semibold">Available Questions</h3>
+        {questions.map((q) => (
+          <div key={q.id} className="border p-3 mb-2 flex justify-between items-center">
+            <div>
+              <p className="font-semibold">{q.slug}</p>
+              {/* @ts-ignore */}
+              <p>{q.difficulty}</p>
+              {/* @ts-ignore */}
+              <p>Tags: {q.questionTags.map((p) => (
+                <span className="mx-1">{p.name}</span>
+              ))}</p>
+            </div>
+            <button
+              onClick={() => addToTest(q)}
+              className="bg-blue-500 text-white px-3 py-1 rounded"
+            >
+              Add to Test
+            </button>
+          </div>
+        ))}
+      </div>
+
     </div>
   );
 }

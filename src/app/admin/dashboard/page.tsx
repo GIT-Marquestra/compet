@@ -1,14 +1,14 @@
 import AllQuestions from '@/components/AllQuestions'
-import CreateTestForm from '@/components/CreateTest'
 import React from 'react'
 
-function page() {
+function Page() {
   return (
-    <div className='flex'>
-      {/* <CreateTestForm/> */}
-      <AllQuestions/>
+    <div className='flex items-center justify-center pt-16 w-full h-screen'>
+      <div className='w-full h-full overflow-auto'>
+        <AllQuestions/>
+      </div>
     </div>
   )
 }
 
-export default page
+export default Page

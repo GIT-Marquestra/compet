@@ -17,7 +17,7 @@ export async function fetchTestQuestions() {
             throw new Error("No contests found");
         }
 
-        console.log(maxContest)
+        // console.log(maxContest)
 
         const questions = await prisma.questionOnContest.findMany({
             where: {
@@ -27,10 +27,11 @@ export async function fetchTestQuestions() {
                 question: true, 
             },
         });
-        console.log(questions)
+        console.log("questions: ", questions)
         return questions; 
     } catch (error) {
-        console.error("Error fetching test questions:", error);
+        //@ts-ignore
+        console.error("Error fetching test questions:", error.message);
         throw new Error("Failed to fetch test questions");
     }
 }

@@ -27,12 +27,12 @@ model User {
   individualPoints   Int                 @default(0)
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
-  coordinatedGroup   Group?              @relation("GroupCoordinator") // Added opposite relation
+  coordinatedGroup   Group?              @relation("GroupCoordinator") 
   
-  @@index([groupId]) // Add index for faster group lookups
+  @@index([groupId]) 
 }
 
-// Group model improvements
+
 model Group {
   id                String              @id @default(uuid())
   name              String              @unique

@@ -1,6 +1,7 @@
 "use client"
 import axios from "axios";
 import { useState } from "react";
+import toast from "react-hot-toast";
 
 const CreateTestForm = () => {
     const [lastContestNum, setLastContestNum] = useState(0)
@@ -63,8 +64,8 @@ const CreateTestForm = () => {
     }
     
 
-    if (!formData.leetcodeUrl && !formData.codeforcesUrl) return alert("At least one URL is required!");
-    if (!formData.slug) return alert("Slug could not be extracted!");
+    if (!formData.leetcodeUrl && !formData.codeforcesUrl) return toast.error("At least one URL is required!");
+    if (!formData.slug) return toast.error("Slug could not be extracted!");
 
     setQuestions((prev) => [...prev, formData]);
 
@@ -83,10 +84,10 @@ const CreateTestForm = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (questions.length === 0) return alert("Add at least one question!");
+    if (questions.length === 0) return toast.error("Add at least one question!");
     console.log("Test Created with Questions:", questions);
     const res = 
-    alert("Test created successfully!");
+    toast.success("Test created successfully!");
   };
 
   return (

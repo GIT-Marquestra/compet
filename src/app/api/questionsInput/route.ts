@@ -13,7 +13,7 @@ export async function POST(req: Request){
             codeforcesUrl: q.platform === "Codeforces" ? q.codeforcesUrl : null,
             difficulty: q.difficulty as Difficulty,
             points: q.points,
-            slug: q.slug,
+            slug: q.slug ? q.slug : 'slug',
         })),
             skipDuplicates: true
         })

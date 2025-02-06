@@ -1,20 +1,31 @@
 import { NextResponse } from 'next/server';
 import prisma from '../../../../lib/prisma'; 
+import bcrypt from 'bcrypt'
 export async function POST(req: Request) {
   const request = await req.json()
+  console.log(request)
+  const hashedPssword = await bcrypt.hash(request.password, 10)
   if(!req.body){
     return 
   }
-  const formData = JSON.parse(request.body);
-  if(!(formData.username)){
+  if(!(request.username)){
     return NextResponse.json({ error: "User creation failed" }, { status: 400 });
   }
+  console.log(request)
   try {
     const user = await prisma.user.create({
-      data: formData
+      data: {
+        username: request.username,
+        email: request.email,
+        password: hashedPssword,
+        leetcodeUsername: request.leetcodeUsername,
+        codeforcesUsername: request.codeforcesUsername,
+        enrollmentNum: request.enrollmentNum,
+        section: request.section
+      }
     });
-    console.log(formData)
-    return NextResponse.json({ user });
+    console.log(user)
+    return NextResponse.json({ user }, { status: 200 });
   } catch (error) {
     // @ts-ignore
     console.error(error.message)

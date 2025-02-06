@@ -2,6 +2,7 @@
 
 import axios from "axios";
 import { useState } from "react";
+import toast from "react-hot-toast";
 
 interface Question {
   leetcodeUrl: string;
@@ -96,9 +97,12 @@ export default function QuestionForm() {
         },
         body: JSON.stringify(questions),
       });
-      console.log(response.data);
+      if(response.status === 200){
+        toast.success('Questions Added Successfully')
+      } 
     } catch (error) {
       console.error("Error submitting questions", error);
+      toast.error('Questions were not created!')
     }
   };
 

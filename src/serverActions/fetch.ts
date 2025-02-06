@@ -7,7 +7,7 @@ export async function fetchLatestSubmissionsLeetCode(username: string){
     try {
         const leetcode = new LeetCode()
         const userStats = await leetcode.user(username)
-        console.log(userStats)
+        // console.log(userStats)
         return userStats
     } catch (error) {
         console.log("Error: ", error)
@@ -27,7 +27,7 @@ export async function fetchLatestSubmissionsCodeForces(username: string){
     await new Promise((resolve) => (setTimeout((resolve), 500)))
     try {
         const userStats = await CodeforcesAPI.call("user.status", { handle: username });
-        console.log(userStats)
+        // console.log(userStats)
         // @ts-ignore
         return userStats.result
     } catch (error) {

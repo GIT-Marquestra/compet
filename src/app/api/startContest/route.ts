@@ -76,9 +76,15 @@ export async function POST(req: Request) {
             const startTime = new Date(contest.startTime);
             startTime.setMinutes(startTime.getMinutes() + 10);
 
-            const now = new Date();
+            const nowString = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
+            console.log("IST Date String:", nowString); // Output the IST string
 
-            if (now < contest.startTime || now > startTime) {
+            const nowO = new Date();
+
+            const offset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
+            const now = new Date(nowO.getTime() + offset); // Adjust UTC time to IST
+
+            if (now < contest.startTime) {
                 return NextResponse.json({ error: "Contest joining period has ended" });
             }
 

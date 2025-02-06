@@ -100,10 +100,20 @@ const ContestQuest: React.FC = () => {
         }
       }
 
+      // console.log({
+      //   contestId: id,
+      //   userEmail: session?.user?.email,
+      //   finalScore: score,
+      //   questions: Array(verifiedProblems)
+      // })
+
+      console.log(verifiedProblems)
+
       const res = await axios.post('/api/endContest', {
         contestId: id,
         userEmail: session?.user?.email,
-        finalScore: score
+        finalScore: score,
+        questions: Array.from(verifiedProblems)
       });
 
       if(res.data.status === 200) toast.success('Test ended successfully!');

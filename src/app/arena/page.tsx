@@ -84,6 +84,8 @@ const DIFFICULTIES = [
 
 const QuestionSolving = () => {
   const [verifiedProblems, setVerifiedProblems] = useState<Set<string>>(new Set());
+  const [cUsername, setCUsername] = useState('')
+  const [lUsername, setLUsername] = useState('')
   const [score, setScore] = useState<number>(0);
   const [isVerifying, setIsVerifying] = useState<Record<string, boolean>>({});
   const [isScoreUpdating, setIsScoreUpdating] = useState<boolean>(false);
@@ -124,6 +126,15 @@ const QuestionSolving = () => {
     requestAnimationFrame(animate);
   };
 
+  const checkExistingSubmission = async (problemName: string) => {
+    const response = await axios.post('/api/checkExistingSubmission', {
+      problemName
+    })
+
+    return response.data.solved
+
+  }
+
   const handleVerify = async (
     platform: 'Leetcode' | 'Codeforces',
     problemName: string,
@@ -141,14 +152,21 @@ const QuestionSolving = () => {
       if (platform === "Leetcode") {
         const response = await axios.post('/api/user/leetcode/username', { userEmail: session?.user?.email })
         const res = await fetchLatestSubmissionsLeetCode(response.data.leetcodeUsername);
+        if(!resLeet) return
         if (res?.recentSubmissionList) {
-          const solved = res.recentSubmissionList.find(
+          let solved = res.recentSubmissionList.find(
             (p: LeetCodeSubmission) => 
               p.titleSlug === problemName && 
               p.statusDisplay === 'Accepted' && 
-              p.timestamp > (resLeet ?? '0')
+              p.timestamp > resLeet
           );
-          
+          if(solved){
+            const r = await checkExistingSubmission(problemName)
+            if(r){
+              solved = undefined
+              toast.success('Already Attempted Question')
+            } 
+          }
           if (solved) {
             setVerifiedProblems(prev => new Set([...prev, questionId]));
             const awardedPoints = Math.floor(points / 2);
@@ -162,13 +180,22 @@ const QuestionSolving = () => {
       } else {
         const response = await axios.post('/api/user/codeforces/username', { userEmail: session?.user?.email })
         const res = await fetchLatestSubmissionsCodeForces(response.data.codeforcesUsername);
+        if(!resCodef) return
         if (res) {
-          const solved = res.find(
+          let solved = res.find(
             (p: CodeForcesSubmission) => 
               p.problem.name === problemName && 
               p.verdict === 'OK' && 
-              p.creationTimeSeconds > parseInt(resCodef ?? '0')
+              p.creationTimeSeconds > parseInt(resCodef)
           );
+
+          if(solved){
+            const r = await checkExistingSubmission(problemName)
+            if(r){
+              solved = undefined
+              toast.success('Already Attempted Question')
+            } 
+          }
           
           if (solved) {
             setVerifiedProblems(prev => new Set([...prev, questionId]));
@@ -197,18 +224,37 @@ const QuestionSolving = () => {
         score: points,
         headers: { 'Content-Type': 'application/json' },
       });
+      if(response.status === 200){
+        toast.success('Score Updated')
+      }
     } catch (error) {
       console.error('Failed to update score on server:', error);
-      toast.error('Failed to save score');
+      toast.error('Score not Updated');
     }
   };
 
   useEffect(() => {
     const func = async () => {
       const response = await axios.post('/api/questions');
+      const responseCodeforcesUsername = await axios.post('/api/user/codeforces/username')
+      const responseLeetcodeUsername = await axios.post('/api/user/leetcode/username')
+      console.log(responseCodeforcesUsername, responseLeetcodeUsername)
+      setCUsername(responseCodeforcesUsername.data.codeforcesUsername)
+      setLUsername(responseLeetcodeUsername.data.leetcodeUsername)
       setQuestions(response.data.questions);
       console.log(response.data.questions)
       setScore(response.data.individualPoints)
+      const resLeet = await fetchLatestSubmissionsLeetCode('Abhi_Verma2678')
+        if(!resLeet) return 
+        if(!(resLeet.recentSubmissionList)) return
+        const leetTime = resLeet?.recentSubmissionList[0].timestamp
+        if(leetTime) setResLeet(leetTime)
+        
+        const resCodef = await fetchLatestSubmissionsCodeForces('Abhi_Verma2678')
+        if(!resCodef) return
+        const codefTime = resCodef[0].creationTimeSeconds
+        setResCodef(codefTime)
+        if(resCodef) setResCodef(resCodef)
     };
     func();
   }, []);

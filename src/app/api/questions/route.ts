@@ -1,4 +1,3 @@
-// app/api/questions/route.ts
 import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
@@ -11,7 +10,7 @@ export async function POST(req: Request) {
 
     const userEmail = session?.user?.email;
 
-    if(!userEmail) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!userEmail) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     // Get current time in IST
     const now = new Date();
@@ -28,7 +27,7 @@ export async function POST(req: Request) {
       },
     });
 
-    // Find user by useEmail and fetch individualPoints
+    // Find user by email and fetch individualPoints
     const user = await prisma.user.findUnique({
       where: { email: userEmail },
       select: { id: true, individualPoints: true },
@@ -37,6 +36,34 @@ export async function POST(req: Request) {
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
+
+    // Fetch all submissions by the user
+    const userSubmissions = await prisma.submission.findMany({
+      where: {
+        userId: user.id,
+      },
+      select: {
+        id: true,
+        status: true,
+        score: true,
+        createdAt: true,
+        question: {
+          select: {
+            id: true,
+            leetcodeUrl: true,
+            codeforcesUrl: true,
+            difficulty: true,
+            points: true,
+            slug: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    console.log(userSubmissions)
 
     // Base query to get questions from contests
     let questionsQuery: any = {
@@ -78,22 +105,22 @@ export async function POST(req: Request) {
     };
 
     if (latestContest && istTime > latestContest.endTime) {
-      // Show all questions including latest contest
+
       const questions = await prisma.questionOnContest.findMany(questionsQuery);
-      return NextResponse.json({ questions, individualPoints: user.individualPoints });
+
+      return NextResponse.json({ questions, individualPoints: user.individualPoints, submissions: userSubmissions });
     } else if (latestContest) {
-      // Exclude latest contest questions
+
       questionsQuery.where = {
         contestId: {
           not: latestContest.id,
         },
       };
-      console.log(user.individualPoints)
       const questions = await prisma.questionOnContest.findMany(questionsQuery);
-      return NextResponse.json({ questions, individualPoints: user.individualPoints });
+      return NextResponse.json({ questions, individualPoints: user.individualPoints, submissions: userSubmissions });
     } else {
       // No contests exist
-      return NextResponse.json({ questions: [], individualPoints: user.individualPoints }, { status: 200 });
+      return NextResponse.json({ questions: [], individualPoints: user.individualPoints, submissions: userSubmissions }, { status: 200 });
     }
   } catch (error: any) {
     console.error('Error fetching questions:', error.message);

@@ -1,63 +1,98 @@
-import { NextApiRequest, NextApiResponse } from 'next';
-import { getSession } from 'next-auth/react';
-import prisma from '@/lib/prisma';
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import prisma from "@/lib/prisma";
 
-export async function POST(
-  req: Request,
-) {
-    const request = await req.json()
-    console.log(request)
-
+export async function POST(req: Request) {
   try {
-    
-    if (!request?.userEmail) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const request = await req.json();
+    console.log("Incoming request:", request);
+
+    const session = await getServerSession();
+    if (!session || !session.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get the current user
+    const userEmail = session.user.email;
+
     const user = await prisma.user.findUnique({
-      where: { email: request.userEmail },
-      include: { group: true }
+      where: { email: userEmail },
     });
 
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Check if user is already in a group
-    if (user.groupId) {
-      return NextResponse.json({ error: 'User is already a member of a group' }, { status: 404 });
+    const admins = ["Abhishek Verma", "Taj", "Kunal", "Sai"];
+    if (!admins.includes(user.username)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    // Create new group and update user
-    const { name } = request;
+    const { name, users, coordinator } = request;
 
-    const group = await prisma.$transaction(async (tx) => {
-      // Create the group
-      const newGroup = await tx.group.create({
-        data: {
-          name,
-          coordinator: { connect: { id: user.id } },
-          members: { connect: { id: user.id } }
-        }
-      });
-
-      // Update the user's groupId
-      await tx.user.update({
-        where: { id: user.id },
-        data: { groupId: newGroup.id }
-      });
-
-      return newGroup;
+    const coordinatorUser = await prisma.user.findUnique({
+      where: { id: coordinator },
     });
 
-    return NextResponse.json({ group }, { status: 200 });
-  } catch (error: any) {
-    if (error.code === 'P2002') {
-      return NextResponse.json({ error: 'Group name already exists' }, { status: 400 });
+    if (!coordinatorUser) {
+      return NextResponse.json({ error: "Coordinator not found" }, { status: 404 });
     }
-    console.log(error.message)
-    return NextResponse.json({ error: 'Failed to create group' }, { status: 500 });
+
+    // Check if the group already exists
+    const existingGroup = await prisma.group.findUnique({
+      where: { name },
+      include: { members: true },
+    });
+
+    if (existingGroup) {
+      // If the group exists, update its details
+      const updatedGroup = await prisma.$transaction(async (tx) => {
+        const updatedGroup = await tx.group.update({
+          where: { id: existingGroup.id },
+          data: {
+            coordinator: { connect: { id: coordinator } },
+            members: { connect: users.map((id: string) => ({ id })) },
+          },
+        });
+
+        // Update users' groupId to match the existing group
+        await tx.user.updateMany({
+          where: { id: { in: users } },
+          data: { groupId: existingGroup.id },
+        });
+
+        return updatedGroup;
+      });
+
+      return NextResponse.json({ group: updatedGroup, message: "Group updated successfully" }, { status: 200 });
+    } else {
+      // If the group doesn't exist, create it as before
+      const group = await prisma.$transaction(
+        async (tx) => {
+          const newGroup = await tx.group.create({
+            data: {
+              name,
+              coordinator: { connect: { id: coordinator } },
+              members: { connect: users.map((id: string) => ({ id })) },
+            },
+          });
+
+          await tx.user.updateMany({
+            where: { id: { in: users } },
+            data: { groupId: newGroup.id },
+          });
+
+          return newGroup;
+        },
+        { timeout: 30000 } // ⬅ Increase timeout to 30 seconds
+      );
+
+      return NextResponse.json({ group, message: "Group created successfully" }, { status: 200 });
+    }
+  } catch (error: any) {
+    console.error("Error creating/updating group:", error.message);
+    if (error.code === "P2002") {
+      return NextResponse.json({ error: "Group name already exists" }, { status: 400 });
+    }
+    return NextResponse.json({ error: "Failed to create/update group" }, { status: 500 });
   }
 }

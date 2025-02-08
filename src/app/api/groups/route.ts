@@ -7,7 +7,6 @@ export async function POST(
   req: Request
 ) {
     const request = await req.json()
-    console.log(request)
   try {
 
     if (!request.body.userEmail) {
@@ -19,7 +18,7 @@ export async function POST(
       where: { email: request.body.userEmail },
       include: { group: true }
     });
-    console.log(user)
+
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
@@ -44,7 +43,7 @@ export async function POST(
         
       })
     }
-    console.log(userGroup)
+
     // Fetch all groups with their member count
     const groups = await prisma.group.findMany({
       include: {

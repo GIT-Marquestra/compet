@@ -1,15 +1,13 @@
 import prisma from "@/lib/prisma";
+import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
 
 export async function POST(req: Request) {
     try {
         
-        const body = await req.json();
-
-        console.log("Incoming request:", body);
-
-        const { userEmail } = body;
+        const session = await getServerSession()
+        const userEmail = session?.user?.email
 
         if (!userEmail) {
             return NextResponse.json({ error: "Email is required" }, { status: 400 });

@@ -63,11 +63,16 @@ export default function AllQuestions() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedDifficulty, setSelectedDifficulty] = useState("all");
   const [filteredQuestions, setFilteredQuestions] = useState<Question[]>([]);
+  const [show, setShow] = useState(true)
 
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
         const response = await axios.get<{ questions: Question[] }>("/api/getQuestions");
+        if(response.status === 430){
+          setShow(false)
+          return
+        }
         setQuestions(response.data.questions);
         setFilteredQuestions(response.data.questions);
       } catch (error) {
@@ -99,7 +104,7 @@ export default function AllQuestions() {
     }
 
     // Then apply tag filter
-    if (selectedTags.length > 0) {
+    if (selectedTags?.length > 0) {
       filtered = filtered.filter(q => {
         const questionTagNames = q.questionTags.map(tag => tag.name);
         return selectedTags.some(selectedTag => questionTagNames.includes(selectedTag));
@@ -114,7 +119,7 @@ export default function AllQuestions() {
   };
 
   const addToTest = (question: Question) => {
-    if (selectedQuestions.some(q => q.id === question.id)) {
+    if (selectedQuestions?.some(q => q.id === question.id)) {
       toast.error("Question already added to test");
       return;
     }
@@ -167,7 +172,7 @@ export default function AllQuestions() {
   };
 
   const handleCreateTest = async () => {
-    if (selectedQuestions.length === 0) {
+    if (show && selectedQuestions.length === 0) {
       toast.error("Please select at least one question to create a test.");
       return;
     }
@@ -198,7 +203,8 @@ export default function AllQuestions() {
 
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
+    <>
+    {show ? <div className="container mx-auto p-4 space-y-6">
       <div className="flex flex-col md:flex-row gap-6">
         {/* Left Column - Test Creation */}
         <div className="w-full md:w-1/3 space-y-6">
@@ -241,7 +247,7 @@ export default function AllQuestions() {
               <CardTitle>Selected Questions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {selectedQuestions.length === 0 ? (
+              {show && selectedQuestions.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No questions selected.</p>
               ) : (
                 selectedQuestions.map((q) => (
@@ -327,12 +333,12 @@ export default function AllQuestions() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {filteredQuestions.length === 0 ? (
+              {show && filteredQuestions?.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">
                   No questions found matching the selected filters.
                 </p>
               ) : (
-                filteredQuestions.map((q) => (
+                filteredQuestions?.map((q) => (
                   <Card key={q.id}>
                     <CardContent className="p-4">
                       <div className="flex justify-between items-start gap-4">
@@ -370,7 +376,7 @@ export default function AllQuestions() {
           </Card>
         </div>
       </div>
-      </div>
+      </div> : <div>Not an Admin</div>}</>
    
   );
 }

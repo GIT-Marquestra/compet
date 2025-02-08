@@ -1,11 +1,11 @@
 export const getDuration = (start: string, end: string) => {
-    const startTimeString = start; // Ensure this is a string
+    const startTimeString = start;
     const endTimeString = end;
 
     const startTime = new Date(startTimeString);
     const endTime = new Date(endTimeString);
 
-    // Check if they are valid dates
+
     if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
     console.error("Invalid date format");
     } else {
@@ -19,13 +19,12 @@ export const getDuration = (start: string, end: string) => {
     }
 }
 export const getDurationUlt = (start: string, end: string) => {
-    const startTimeString = start; // Ensure this is a string
+    const startTimeString = start;
     const endTimeString = end;
 
     const startTime = new Date(startTimeString);
     const endTime = new Date(endTimeString);
 
-    // Check if they are valid dates
     if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
     console.error("Invalid date format");
     } else {

@@ -1,9 +1,13 @@
 import prisma from "@/lib/prisma"
 import { Difficulty } from "@prisma/client"
+import axios from "axios";
 import { NextResponse } from "next/server"
 
 export async function POST(req: Request){
     try {
+        const isAdmin = await axios.post('/api/checkIfAdmin')
+
+        if(!isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 430 });
         const request = await req.json()
         const data = JSON.parse(request.body)
         console.log('Data: ', data)

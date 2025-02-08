@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
@@ -27,24 +26,14 @@ interface Group {
   groupPoints: number;
 }
 
-interface GroupApplication {
-  id: string;
-  status: 'PENDING' | 'ACCEPTED' | 'REJECTED';
-  applicantId: string;
-  groupId: string;
-  createdAt: Date;
-}
-
 const GroupManagement = () => {
-  const [showNewGroupForm, setShowNewGroupForm] = useState(false);
   const [showExistingGroups, setShowExistingGroups] = useState(false);
-  const [groupName, setGroupName] = useState('');
-  const [error, setError] = useState('');
   const [existingGroups, setExistingGroups] = useState<Group[]>([]);
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [userGroups, setUserGroups] = useState<Group>();
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
 
   useEffect(() => {
     if (session?.user?.email) {
@@ -52,39 +41,15 @@ const GroupManagement = () => {
     }
   }, [session]);
 
-  const handleCreateGroup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    try {
-      const response = await axios.post('/api/groups/create', {
-        name: groupName,
-        userEmail: session?.user?.email,
-      });
-
-      if (response.status === 200) {
-        toast.success('Group created successfully!');
-        router.push('/user/dashboard');
-      }
-    } catch (err) {
-      const error = err as Error;
-      setError(error.message);
-      toast.error('Failed to create group');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleApply = async (groupId: string) => {
     try {
       const response = await axios.post('/api/groups/apply', {
         groupId,
         userEmail: session?.user?.email,
       });
-      console.log('Response: ', response)
-      if(response.data.status === 400){
-        toast.error('You have already applied!')
+      console.log('Response: ', response);
+      if (response.data.status === 400) {
+        toast.error('You have already applied!');
       }
       if (response.status === 201) {
         toast.success('Application submitted successfully!');
@@ -104,11 +69,11 @@ const GroupManagement = () => {
         groupId,
         userEmail: session?.user?.email,
       });
-      console.log('Leave: ', response)
+      console.log('Leave: ', response);
       if (response.status === 200) {
         toast.success('Left group successfully!');
-        revalidatePath('/groupCreation')
-        fetchUserGroups(); 
+        revalidatePath('/groupCreation');
+        fetchUserGroups();
       }
     } catch (err) {
       const error = err as Error;
@@ -121,16 +86,14 @@ const GroupManagement = () => {
     setError('');
 
     try {
-      const response = await axios.post("/api/groups", {
+      const response = await axios.post('/api/groups', {
         body: {
-          userEmail: session?.user?.email
-        }
+          userEmail: session?.user?.email,
+        },
       });
-      console.log(response)
-      
+      console.log(response);
       setExistingGroups(response.data.groups);
       setShowExistingGroups(true);
-      setShowNewGroupForm(false);
     } catch (err) {
       const error = err as Error;
       setError(error.message);
@@ -143,11 +106,10 @@ const GroupManagement = () => {
     try {
       const response = await axios.post('/api/groups', {
         body: {
-          userEmail: session?.user?.email 
-        }
+          userEmail: session?.user?.email,
+        },
       });
-      console.log(response.data)
-      if(response.data.userGroup){
+      if (response.data.userGroup) {
         setUserGroups(response.data.userGroup);
       }
     } catch (err) {
@@ -168,59 +130,25 @@ const GroupManagement = () => {
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-          
-          {/* My Groups Section */}
+
           {userGroups && (
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">My Groups</h3>
-             
-                <div key={userGroups.id} className="flex items-center justify-between p-4 border rounded">
-                  <div>
-                    <h3 className="font-medium">{userGroups.name}</h3>
-                    <p className="text-sm text-gray-500">Members: {userGroups._count.members}</p>
-                  </div>
-                  <Button 
-                    variant="destructive" 
-                    onClick={() => handleLeaveGroup(userGroups.id)}
-                  >
-                    Leave Group
-                  </Button>
+              <div key={userGroups.id} className="flex items-center justify-between p-4 border rounded">
+                <div>
+                  <h3 className="font-medium">{userGroups.name}</h3>
+                  <p className="text-sm text-gray-500">Members: {userGroups._count.members}</p>
                 </div>
-             
+                <Button variant="destructive" onClick={() => handleLeaveGroup(userGroups.id)}>
+                  Leave Group
+                </Button>
+              </div>
             </div>
           )}
 
-          <div className="flex gap-4">
-            <Button 
-              onClick={() => {
-                setShowNewGroupForm(true);
-                setShowExistingGroups(false);
-              }}
-              className="w-1/2"
-            >
-              Create New Group
-            </Button>
-            <Button 
-              onClick={fetchExistingGroups}
-              className="w-1/2"
-            >
-              View Existing Groups
-            </Button>
-          </div>
-
-          {showNewGroupForm && (
-            <form onSubmit={handleCreateGroup} className="space-y-4">
-              <Input
-                placeholder="Enter group name"
-                value={groupName}
-                onChange={(e) => setGroupName(e.target.value)}
-                required
-              />
-              <Button type="submit" disabled={loading} className="w-full">
-                {loading ? 'Creating...' : 'Create Group'}
-              </Button>
-            </form>
-          )}
+          <Button onClick={fetchExistingGroups} className="w-full">
+            View Existing Groups
+          </Button>
 
           {showExistingGroups && (
             <div className="space-y-4">
@@ -229,23 +157,14 @@ const GroupManagement = () => {
                   <div>
                     <h3 className="font-medium">{group.name}</h3>
                     <p className="text-sm text-gray-500">Members: {group._count.members}</p>
-                    <p className="text-sm text-gray-500">
-                      Coordinator: {group.coordinator.username}
-                    </p>
+                    <p className="text-sm text-gray-500">Coordinator: {group.coordinator.username}</p>
                   </div>
-                  
-                    <Button 
-                      variant="outline" 
-                      onClick={() => handleApply(group.id)}
-                    >
-                      Apply
-                    </Button>
-                  
+                  <Button variant="outline" onClick={() => handleApply(group.id)}>
+                    Apply
+                  </Button>
                 </div>
               ))}
-              {existingGroups.length === 0 && (
-                <p className="text-center text-gray-500">No groups found</p>
-              )}
+              {existingGroups.length === 0 && <p className="text-center text-gray-500">No groups found</p>}
             </div>
           )}
         </div>

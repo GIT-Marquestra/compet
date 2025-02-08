@@ -52,6 +52,23 @@ export async function GET() {
             where: { userId: user.id },
         });
 
+        console.log({
+            latestContest,
+            user: {
+                id: user.id,
+                email: user.email,
+                username: user.username,
+                individualPoints: user.individualPoints,
+                group: user.group
+                    ? {
+                        name: user.group.name,
+                        members: user.group.members.map(member => member.username), // List of usernames
+                    }
+                    : null, 
+            },
+            submissionCount,
+        }, )
+
         return NextResponse.json(
             {
                 latestContest,
@@ -59,6 +76,7 @@ export async function GET() {
                     id: user.id,
                     email: user.email,
                     username: user.username,
+                    individualPoints: user.individualPoints,
                     group: user.group
                         ? {
                             name: user.group.name,

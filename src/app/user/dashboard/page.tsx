@@ -58,17 +58,17 @@ export default function Dashboard() {
       try {
         const contestsResponse = await axios.get('/api/getData');
         console.log(contestsResponse.data)
-        if (contestsResponse.data.contests.length > 0) {
-          setLatestContest(contestsResponse.data.latestContest);
-        }
+        setLatestContest(contestsResponse.data.latestContest)
+        
         
         setUserStats({
-          totalSubmissions: contestsResponse.submissionCount,
-          totalPoints: contestsResponse.user.individualPoints,
-          groupName: contestsResponse.user.group?.name,
-          groupMembers: contestsResponse.user.group?.members
+          totalSubmissions: contestsResponse.data.submissionCount,
+          totalPoints: contestsResponse.data.user.individualPoints,
+          groupName: contestsResponse.data.user.group?.name,
+          groupMembers: contestsResponse.data.user.group?.members
         });
-      } catch (error) {
+      } catch (error: any) {
+        console.log(error.message)
         toast.error('Unable to fetch dashboard data');
       }
     };
@@ -115,11 +115,11 @@ export default function Dashboard() {
               Group: {userStats.groupName ? userStats.groupName : 'Null'}
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          {userStats.groupName && <CardContent>
             <p className="text-3xl font-bold">
               {userStats.groupMembers.reduce((sum, member) => sum + member.points, 0)}
             </p>
-          </CardContent>
+          </CardContent>}
           <div className="absolute top-0 right-0 translate-x-1/3 -translate-y-1/3 w-24 h-24 bg-primary/10 rounded-full" />
         </Card>
       </div>
@@ -177,7 +177,7 @@ export default function Dashboard() {
       </Card>
 
       {/* Group Members Section */}
-      <Card>
+      {userStats.groupName ? <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-primary">
             <Users className="h-5 w-5" />
@@ -193,7 +193,7 @@ export default function Dashboard() {
                 <TableHead className="text-right">Rank</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            {userStats.groupName && <TableBody>
               {userStats.groupMembers
                 .sort((a, b) => b.points - a.points)
                 .map((member, index) => (
@@ -212,10 +212,10 @@ export default function Dashboard() {
                     </TableCell>
                   </TableRow>
               ))}
-            </TableBody>
+            </TableBody>}
           </Table>
         </CardContent>
-      </Card>
+      </Card> : <div className='flex justify-center'>You are not part of a Group</div>}
     </div>
   );
 }

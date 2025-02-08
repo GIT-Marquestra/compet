@@ -55,6 +55,7 @@ const ContestQuest: React.FC = () => {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [show, setShow] = useState<boolean>(false);
+  const [showModal, setShowModal] = useState(false);
   const params = useParams();
   const id = params.num?.[0];
   const [resLeet, setResLeet] = useState<string>();
@@ -100,13 +101,6 @@ const ContestQuest: React.FC = () => {
         }
       }
 
-      // console.log({
-      //   contestId: id,
-      //   userEmail: session?.user?.email,
-      //   finalScore: score,
-      //   questions: Array(verifiedProblems)
-      // })
-
       console.log(verifiedProblems)
 
       const res = await axios.post('/api/endContest', {
@@ -126,6 +120,40 @@ const ContestQuest: React.FC = () => {
       toast.dismiss(loader)
     }
   };
+
+  
+
+  useEffect(() => {
+    const handleBack = () => {
+      setShowModal(true);
+      window.history.pushState(null, "", window.location.pathname); // Prevents actual back
+    };
+
+    window.addEventListener("popstate", handleBack);
+
+    return () => {
+      window.removeEventListener("popstate", handleBack);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "Are you sure you want to leave? Your test progress will be lost.";
+    };
+
+    window.addEventListener("beforeunload", handleUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleUnload);
+    };
+  }, []);
+
+  const confirmExit = () => {
+    setShowModal(false);
+    router.back(); // Allow the back navigation
+  };
+
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -398,7 +426,22 @@ const ContestQuest: React.FC = () => {
               );
             })}
           </div>
+          {showModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-4 rounded-lg shadow-lg">
+            <h2>End Test?</h2>
+            <p>Are you sure you want to leave? Your progress will be lost.</p>
+            <button onClick={() => setShowModal(false)} className="mr-4 bg-blue-500 text-white px-3 py-2 rounded">
+              Cancel
+            </button>
+            <button onClick={confirmExit} className="bg-red-500 text-white px-3 py-2 rounded">
+              End Test
+            </button>
+          </div>
         </div>
+      )}
+        </div>
+        
       )}
     </div>
   );

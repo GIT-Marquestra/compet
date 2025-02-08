@@ -1,148 +1,140 @@
 import prisma from '@/lib/prisma';
-import { NextApiRequest, NextApiResponse } from 'next';
-import { authOptions } from '@/lib/authOptions'; // Adjust path if necessary
-import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
 import { getDurationUlt } from '@/serverActions/getDuration';
+import { getServerSession } from 'next-auth';
 
 export async function POST(req: Request) {
-    const request = await req.json()
-    const { user } = request.body
-    if(!user) return NextResponse.json({ status: 400 })
-
-    const { contestId } = request.body;
     try {
+        const request = await req.json();
+        const session = await getServerSession()
+        const userEmail = session?.user?.email
+
+        if(!userEmail) return NextResponse.json({ error: "UnAuthorized" }, { status: 401 });
+
+        const user = await prisma.user.findUnique({
+            where:{
+                email: userEmail
+            }
+        })
         
-        const contest = await prisma.contest.findUnique({
-            where: { id: parseInt(contestId) },
+        if (!user) {
+            return NextResponse.json({ error: "User not provided" }, { status: 400 });
+        }
+
+        // Get the latest contest
+        const contest = await prisma.contest.findFirst({
+            orderBy: {
+                id: 'desc'
+            },
             include: {
                 questions: {
                     include: {
-                        question: true, 
+                        question: true,
                     }
                 }
             }
         });
 
-        console.log(contest?.questions)
-
-        const latestCreatedContest = await prisma.contest.findFirst({
-            orderBy:{
-                id: 'desc'
-            }
-        })
-        if(!latestCreatedContest) return NextResponse.json({ error: 'latestContest not found' }, { status: 404 })
-        if (!contest) return NextResponse.json({ error: "Contest not found" }, { status: 404 });
-
-        if (parseInt(contestId) === latestCreatedContest.id) {
-            console.log('In current test block');
-
-            const userGroup = await prisma.group.findFirst({
-                where: {
-                    members: {
-                        some: {
-                            email: user.email
-                        }
-                    }
-                }
-            });
-
-            if (!userGroup) return NextResponse.json({ status: 404 });
-
-            console.log(userGroup);
-
-            // Check if the group already has an entry in GroupOnContest
-            let groupOnContest = await prisma.groupOnContest.findUnique({
-                where: {
-                    groupId_contestId: {
-                        groupId: userGroup.id,
-                        contestId: parseInt(contestId),
-                    },
-                },
-            });
-
-            // If no entry exists, create one with score = 0
-            if (!groupOnContest) {
-                groupOnContest = await prisma.groupOnContest.create({
-                    data: {
-                        groupId: userGroup.id,
-                        contestId: parseInt(contestId),
-                        score: 0,
-                    },
-                });
-                console.log("New GroupOnContest entry created:", groupOnContest);
-            }
-
-            const startTime = new Date(contest.startTime);
-            startTime.setMinutes(startTime.getMinutes() + 10);
-
-            const nowString = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
-            console.log("IST Date String:", nowString); // Output the IST string
-
-            const nowO = new Date();
-
-            const offset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
-            const now = new Date(nowO.getTime() + offset); // Adjust UTC time to IST
-
-            if (now < contest.startTime) {
-                return NextResponse.json({ error: "Contest joining period has ended" });
-            }
-
-            console.log(7, userGroup);
-
-            const expiryTime = new Date(startTime);
-            //@ts-ignore
-            const duration = getDurationUlt(contest.startTime, contest.endTime);
-
-            if (!duration) return;
-
-            console.log(duration, typeof duration);
-
-            expiryTime.setHours(expiryTime.getHours() + duration);
-
-            // If time is up, deny access
-            if (now > expiryTime) {
-                return NextResponse.json({ error: "Test time expired" }, { status: 420 });
-            }
-
-            // Calculate remaining time in seconds
-            const remainingTime = Math.floor((expiryTime.getTime() - now.getTime()) / 1000);
-            console.log(8, remainingTime);
-
-            return NextResponse.json({
-                message: "User can take the test",
-                expiryTime,
-                remainingTime,
-                questions: contest.questions,
-                status: 200
-            });
-        } else {
-            const startTime = new Date(contest.startTime);
-            startTime.setMinutes(startTime.getMinutes() + 10); 
-            const now = new Date()
-            const expiryTime = new Date(startTime);
-            //@ts-ignore
-            const duration = getDurationUlt(contest.startTime, contest.endTime)
-
-            if(!duration) return 
-
-            console.log(duration, typeof(duration))
-
-            expiryTime.setHours(expiryTime.getHours() + duration);
-
-            const remainingTime = Math.floor((expiryTime.getTime() - now.getTime()) / 1000);
-            console.log(8, remainingTime)
-
-            return NextResponse.json({ message: 'Test Start', remainingTime, expiryTime, questions: contest.questions, status: 200 })
-
+        if (!contest) {
+            return NextResponse.json({ error: "No contest found" }, { status: 404 });
         }
 
+        // Get user's group
+        const userGroup = await prisma.group.findFirst({
+            where: {
+                members: {
+                    some: {
+                        email: user.email
+                    }
+                }
+            }
+        });
+
+        if (!userGroup) {
+            return NextResponse.json({ error: "User not part of any group" }, { status: 404 });
+        }
+
+        // Time calculations
+        const now = new Date();
+        const istOffset = 5.5 * 60 * 60 * 1000; // IST offset from UTC
+        const currentTimeIST = new Date(now.getTime() + istOffset);
         
-        
-    } catch (error) {
+        const contestStart = new Date(contest.startTime);
+        const contestEnd = new Date(contest.endTime);
+        const joiningWindowEnd = new Date(contestStart.getTime() + (10 * 60 * 1000)); // 10 minutes after start
+
+        // Time validation checks
+        if (currentTimeIST < contestStart) {
+            return NextResponse.json({ 
+                error: "Contest hasn't started yet",
+                startTime: contestStart
+            }, { status: 403 });
+        }
+
+        if (currentTimeIST > contestEnd) {
+            return NextResponse.json({ 
+                error: "Contest has ended",
+                endTime: contestEnd
+            }, { status: 420 });
+        }
+
+        if (currentTimeIST > joiningWindowEnd) {
+            return NextResponse.json({ 
+                error: "Contest joining window has closed",
+                joiningWindowEnd
+            }, { status: 403 });
+        }
+
+        // Handle group contest entry
+        let groupOnContest = await prisma.groupOnContest.findUnique({
+            where: {
+                groupId_contestId: {
+                    groupId: userGroup.id,
+                    contestId: contest.id,
+                },
+            },
+        });
+
+        if (!groupOnContest) {
+            groupOnContest = await prisma.groupOnContest.create({
+                data: {
+                    groupId: userGroup.id,
+                    contestId: contest.id,
+                    score: 0,
+                },
+            });
+        }
+
+        // Calculate remaining time
         //@ts-ignore
-        console.log(error.message)
-        return NextResponse.json({ status: 500 })
-        
+        const duration = getDurationUlt(contest.startTime, contest.endTime);
+        if (!duration) {
+            return NextResponse.json({ error: "Invalid contest duration" }, { status: 400 });
+        }
+
+        const expiryTime = new Date(contestStart.getTime() + (duration * 60 * 60 * 1000)); // Convert hours to milliseconds
+        const remainingTime = Math.floor((expiryTime.getTime() - currentTimeIST.getTime()) / 1000);
+
+        return NextResponse.json({
+            message: "User can take the test",
+            contest: {
+                id: contest.id,
+                startTime: contestStart,
+                endTime: contestEnd,
+                joiningWindowEnd,
+                expiryTime,
+            },
+            remainingTime,
+            questions: contest.questions,
+            groupId: userGroup.id,
+            status: 200
+        });
+
+    } catch (error) {
+        console.error('Contest route error:', error);
+        return NextResponse.json({ 
+            error: "Internal server error",
+            message: error instanceof Error ? error.message : "Unknown error"
+        }, { status: 500 });
     }
 }

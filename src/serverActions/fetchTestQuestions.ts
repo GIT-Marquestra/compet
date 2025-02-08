@@ -30,8 +30,7 @@ export async function fetchTestQuestions() {
         console.log("questions: ", questions)
         return questions; 
     } catch (error) {
-        //@ts-ignore
-        console.error("Error fetching test questions:", error.message);
+        console.error("Error fetching test questions:", error);
         throw new Error("Failed to fetch test questions");
     }
 }

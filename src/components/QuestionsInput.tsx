@@ -8,11 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Loader2 } from "lucide-react";
 import toast from 'react-hot-toast';
 import axios from 'axios';
-import { revalidatePath } from 'next/cache';
 
 interface Question {
   slug: string;
@@ -68,7 +66,7 @@ export default function QuestionForm() {
     ]);
   };
 
-  const updateQuestion = (index: number, field: keyof Question, value: any) => {
+  const updateQuestion = (index: number, field: keyof Question, value: string) => {
     setQuestions((prevQuestions) =>
       prevQuestions.map((q, i) => {
         if (i === index) {
@@ -107,6 +105,7 @@ export default function QuestionForm() {
         setQuestions([]);
       }
     } catch (error) {
+      console.log(error)
       toast.error("Questions were not created!");
     } finally {
       setLoading(false);

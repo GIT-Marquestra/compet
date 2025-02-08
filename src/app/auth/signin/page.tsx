@@ -28,6 +28,7 @@ export default function SignIn() {
         toast.success('Signed In')
       }
     } catch (error) {
+      console.log(error)
       toast.error("An error occurred during sign-in.");
     }
   };

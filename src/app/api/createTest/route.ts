@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import prisma from '../../../lib/prisma'; 
+interface Q {
+  id : string
+}
 export async function POST(req: Request) {
   const request = await req.json()
   console.log(request)
@@ -30,7 +33,7 @@ export async function POST(req: Request) {
     })
     console.log(contest)
     const user = await prisma.questionOnContest.createMany({
-      data: request.questions.map((q: any) => ({
+      data: request.questions.map((q : Q) => ({
         contestId,
         questionId: q.id,
       }))

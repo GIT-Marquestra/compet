@@ -2,6 +2,12 @@ import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 import { getDurationUlt } from '@/serverActions/getDuration';
 import { getServerSession } from 'next-auth';
+interface Contest {
+    id: number,
+    startTime: string,
+    endTime: string,
+    questions: Object[]
+}
 
 export async function POST() {
     try {
@@ -22,7 +28,7 @@ export async function POST() {
 
         
         // Get the latest contest
-        const contest = await prisma.contest.findFirst({
+        const contestData = await prisma.contest.findFirst({
             orderBy: {
                 id: 'desc'
             },
@@ -30,11 +36,21 @@ export async function POST() {
                 questions: {
                     include: {
                         question: true,
-                    }
-                }
-            }
+                    },
+                },
+            },
         });
-
+        
+        if (!contestData) {
+            return NextResponse.json({ error: "Contest not found" }, { status: 404 });
+        }
+        
+        // Convert Date fields to string
+        const contest: Contest = {
+            ...contestData,
+            startTime: contestData.startTime.toISOString(), // Convert Date to string
+            endTime: contestData.endTime.toISOString(), // Convert Date to string
+        };
 
         if(!contest) return 
 
@@ -121,8 +137,6 @@ export async function POST() {
             });
         }
 
-        // Calculate remaining time
-        //@ts-ignore
         const duration = getDurationUlt(contest.startTime, contest.endTime);
         if (!duration) {
             return NextResponse.json({ error: "Invalid contest duration" }, { status: 400 });

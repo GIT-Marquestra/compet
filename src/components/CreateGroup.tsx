@@ -31,9 +31,7 @@ const GroupManagement = () => {
   const [showExistingGroups, setShowExistingGroups] = useState(false);
   const [existingGroups, setExistingGroups] = useState<Group[]>([]);
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
   const [userGroups, setUserGroups] = useState<Group>();
-  const router = useRouter();
   const { data: session } = useSession();
 
 
@@ -60,11 +58,6 @@ const GroupManagement = () => {
   }, [session, fetchUserGroups]);
   
 
-// useEffect(() => {
-//     if (session?.user?.email) {
-//         fetchUserGroups();
-//     }
-// }, [session, fetchUserGroups]);
 
   const handleApply = async (groupId: string) => {
     try {
@@ -107,7 +100,6 @@ const GroupManagement = () => {
   };
 
   const fetchExistingGroups = async () => {
-    setLoading(true);
     setError('');
 
     try {
@@ -122,8 +114,6 @@ const GroupManagement = () => {
     } catch (err) {
       const error = err as Error;
       setError(error.message);
-    } finally {
-      setLoading(false);
     }
   };
 

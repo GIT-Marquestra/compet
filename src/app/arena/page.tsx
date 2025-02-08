@@ -10,7 +10,6 @@ import toast from 'react-hot-toast';
 import { Difficulty } from '@prisma/client';
 import { fetchLatestSubmissionsCodeForces, fetchLatestSubmissionsLeetCode } from '@/serverActions/fetch';
 import axios from 'axios';
-import { useSession } from 'next-auth/react';
 import {
   Select,
   SelectContent,
@@ -35,6 +34,11 @@ interface Question {
     status: string;
     score: number;
   }[];
+}
+
+interface AnyTag {
+  id: string,
+  name: string
 }
 
 interface LeetCodeSubmission {
@@ -374,7 +378,7 @@ const QuestionSolving = () => {
                   </Badge>
                 </div>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {q.question.questionTags.map((tag: any) => (
+                  {q.question.questionTags.map((tag: AnyTag) => (
                     <Badge
                       key={tag.id}
                       variant="outline"

@@ -38,9 +38,9 @@ const GroupMemberAdder = ({ groupId, groupName }: GroupMemberAdderProps) => {
           console.error('Users data is not an array:', usersResponse.data);
           setError('Invalid users data received');
         }
-      } catch (err: any) {
+      } catch (err) {
         console.error('Error:', err);
-        setError(err.message || 'Failed to fetch users');
+        setError('Failed to fetch users');
         toast.error('Failed to fetch users');
       } finally {
         setIsLoading(false);
@@ -76,10 +76,10 @@ const GroupMemberAdder = ({ groupId, groupName }: GroupMemberAdderProps) => {
       
       toast.success('Members added successfully');
       setSelectedUsers([]);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error adding members:', err);
-      toast.error(err.response?.data?.message || 'Failed to add members');
-      setError(err.response?.data?.message || 'Failed to add members');
+      toast.error('Failed to add members');
+      setError('Failed to add members');
     } finally {
       setIsSubmitting(false);
     }

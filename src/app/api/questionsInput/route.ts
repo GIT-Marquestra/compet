@@ -1,23 +1,33 @@
-import prisma from "@/lib/prisma"
-import { Difficulty } from "@prisma/client"
+import prisma from "@/lib/prisma";
+import { Difficulty } from "@prisma/client";
 import axios from "axios";
-import { NextResponse } from "next/server"
+import { NextResponse } from "next/server";
 
-export async function POST(req: Request){
+interface QuestionInput {
+    leetcodeUrl?: string;
+    codeforcesUrl?: string;
+    platform: "Leetcode" | "Codeforces";
+    difficulty: Difficulty;
+    points: number;
+    slug: string;
+    tags?: string[];
+}
+
+export async function POST(req: Request) {
     try {
-        const isAdmin = await axios.post('/api/checkIfAdmin')
+        const isAdmin = await axios.post('/api/checkIfAdmin');
 
-        if(!isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 430 });
-        const request = await req.json()
-        const data = JSON.parse(request.body)
-        console.log('Data: ', data)
+        if (!isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 430 });
+
+        const data: QuestionInput[] = await req.json();
+        console.log("Data: ", data);
 
         // Extract all unique tags
-        const allTags = [...new Set(data.flatMap((q: any) => q.tags || []))];
+        const allTags: string[] = [...new Set(data.flatMap((q) => q.tags || []))];
 
         // Ensure all tags exist before linking them to questions
         await prisma.$transaction(
-            allTags.map((tagName: any) => 
+            allTags.map((tagName) => 
                 prisma.questionTag.upsert({
                     where: { name: tagName },
                     update: {},
@@ -28,12 +38,12 @@ export async function POST(req: Request){
 
         // Create questions
         const res = await prisma.question.createMany({
-            data: data.map((q: any) => ({
+            data: data.map((q) => ({
                 leetcodeUrl: q.platform === "Leetcode" ? q.leetcodeUrl : null,
                 codeforcesUrl: q.platform === "Codeforces" ? q.codeforcesUrl : null,
-                difficulty: q.difficulty as Difficulty,
+                difficulty: q.difficulty,
                 points: q.points,
-                slug: q.slug ? q.slug : 'slug',
+                slug: q.slug || "slug",
             })),
             skipDuplicates: true
         });
@@ -47,7 +57,7 @@ export async function POST(req: Request){
                     where: { slug: question.slug },
                     data: {
                         questionTags: {
-                            connect: question.tags.map((tagName: string) => ({
+                            connect: question.tags.map((tagName) => ({
                                 name: tagName
                             }))
                         }

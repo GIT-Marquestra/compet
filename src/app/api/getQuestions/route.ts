@@ -4,10 +4,7 @@ import { NextResponse } from "next/server";
 
 export async function POST() {
     try {
-    //   const response = await axios.post('/api/checkIfAdmin')
-    //   console.log(1)
 
-    // if(!response.data.isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 430 });
 
       const questions = await prisma.question.findMany({
         include: {
@@ -19,7 +16,7 @@ export async function POST() {
       });
 
       return NextResponse.json({ questions }, { status: 200 })
-    } catch (error: any) {
+    } catch (error) {
       console.log(error)
       return NextResponse.json({ error }, { status: 400 })
     }

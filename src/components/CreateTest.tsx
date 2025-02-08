@@ -6,7 +6,6 @@ import toast from "react-hot-toast";
 
 const CreateTestForm = () => {
     const [lastContestNum, setLastContestNum] = useState(0)
-    const [show, setShow] = useState(false)
   const [questions, setQuestions] = useState<
     { leetcodeUrl: string; codeforcesUrl: string; difficulty: string; points: number; slug: string }[]
   >([]);
@@ -34,7 +33,6 @@ const CreateTestForm = () => {
 
         if(!response.data.isAdmin) return 
 
-        if(response.data.isAdmin) setShow(true)
 
       } catch (error) {
         
@@ -107,7 +105,6 @@ const CreateTestForm = () => {
     e.preventDefault();
     if (questions.length === 0) return toast.error("Add at least one question!");
     console.log("Test Created with Questions:", questions);
-    const res = 
     toast.success("Test created successfully!");
   };
 

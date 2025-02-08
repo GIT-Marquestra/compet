@@ -1,7 +1,6 @@
 
 "use server"
 import { LeetCode } from "leetcode-query";
-// @ts-ignore
 import { CodeforcesAPI } from "codeforces-api-ts";
 export async function fetchLatestSubmissionsLeetCode(username: string){
     await new Promise((resolve) => (setTimeout((resolve), 1500)))
@@ -30,7 +29,7 @@ export async function fetchLatestSubmissionsCodeForces(username: string){
         console.log(username)
         console.log('hi')
         const userStats = await CodeforcesAPI.call("user.status", { handle: username });
-        // @ts-ignore
+        //@ts-expect-error
         return userStats.result
     } catch (error) {
         console.log("Error: ", error)

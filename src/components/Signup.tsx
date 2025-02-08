@@ -1,4 +1,3 @@
-//@ts-nocheck
 "use client"
 import React, { useState } from "react";
 import axios from "axios";
@@ -30,7 +29,6 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Eye, EyeOff, UserPlus } from "lucide-react";
-import { Router } from "next/router";
 import toast from "react-hot-toast";
 
 // Validation schema

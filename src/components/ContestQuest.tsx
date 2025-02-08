@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -32,6 +32,7 @@ import { Difficulty } from '@prisma/client';
 
 import { fetchLatestSubmissionsCodeForces, fetchLatestSubmissionsLeetCode } from '@/serverActions/fetch';
 import axios from 'axios';
+
 
 interface Question {
   id: string;
@@ -74,12 +75,11 @@ interface ApiResponse {
 
 const ContestQuest: React.FC = () => {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const [show, setShow] = useState<boolean>(false);
   const [showModal, setShowModal] = useState(false);
   const params = useParams();
   const id = params.num?.[0];
-  const [setUsername] = useState('')
   const [loadingStartTest, setloadingStartTest] = useState(false)
   const [resLeet, setResLeet] = useState<string>();
   const [resCodef, setResCodef] = useState<string>();
@@ -111,7 +111,7 @@ const ContestQuest: React.FC = () => {
     requestAnimationFrame(animate);
   };
 
-  const handleEndTest = async (): Promise<void> => {
+  const handleEndTest = useCallback(async (): Promise<void> => {
     setIsEndingTest(true);
     const loader = toast.loading('Verifying all questions...');
 
@@ -146,13 +146,12 @@ const ContestQuest: React.FC = () => {
       setIsEndingTest(false);
       toast.dismiss(loader)
     }
-  };
+  }, [])
 
 
   useEffect(() => {
     const checkIfAdmin = async () => {
       try {
-        const usernameResponse = await axios.post('/api/getUsername') 
         const resL = await axios.post('/api/user/leetcode/username')
         const resC = await axios.post('/api/user/codeforces/username')
         setCUsername(resC.data.codeforcesUsername)
@@ -235,8 +234,7 @@ const ContestQuest: React.FC = () => {
       }, 1000);
     }
     return () => clearInterval(timer);
-  }, [show, timeLeft]);
-
+  }, [show, timeLeft, handleEndTest]);
   const formatTime = (seconds: number): string => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -245,7 +243,7 @@ const ContestQuest: React.FC = () => {
   };
 
   const getDifficultyColor = (difficulty: Difficulty): string => {
-    //@ts-ignore
+    //@ts-expect-error
     const colors: Record<Difficulty, string> = {
       EASY: 'bg-green-500/10 text-green-500',
       MEDIUM: 'bg-yellow-500/10 text-yellow-500',
@@ -273,7 +271,7 @@ const ContestQuest: React.FC = () => {
         
         if(!resLeet) return 
         if (res?.recentSubmissionList) {
-          const solved = res.recentSubmissionList.find(//@ts-ignore
+          const solved = res.recentSubmissionList.find(
             (p: LeetCodeSubmission) => p.titleSlug === problemName && p.statusDisplay === 'Accepted' && parseInt(p.timestamp) > parseInt(resLeet)
           );
           console.log(solved)
@@ -288,7 +286,7 @@ const ContestQuest: React.FC = () => {
       } else {
         const res = await fetchLatestSubmissionsCodeForces(cusername);
         if (res) {
-          const solved = res.find(//@ts-ignore
+          const solved = res.find(//@ts-expect-error
             (p: CodeForcesSubmission) => p.problem.name === problemName && p.verdict === 'OK' && p.creationTimeSeconds > parseInt(resCodef)
           );
           if (solved) {
@@ -301,17 +299,7 @@ const ContestQuest: React.FC = () => {
         }
       }
 
-      // try {
-      //   await axios.post('/api/updateScore', {
-      //     contestId: id,
-      //     //@ts-ignore
-      //     userId: session?.user?.id,
-      //     score: score + points,
-      //     questionId: questionId
-      //   });
-      // } catch (error) {
-      //   console.error('Failed to update score on server:', error);
-      // }
+
 
     } catch (error) {
       toast.error('Error verifying submission');
@@ -329,7 +317,7 @@ const ContestQuest: React.FC = () => {
         body: { user: session?.user, contestId: id }
       });
 
-      // console.log(response.data.remainingTime)
+
       
       
       const resLeet = await fetchLatestSubmissionsLeetCode(lusername)
@@ -343,7 +331,7 @@ const ContestQuest: React.FC = () => {
       const codefTime = resCodef[0].creationTimeSeconds
       setResCodef(codefTime)
       if(resCodef) setResCodef(resCodef) 
-      //@ts-ignore
+      //@ts-expect-error
       setTimeLeft(response.data.remainingTime + 60)
         
       console.log(response.status)
@@ -365,10 +353,7 @@ const ContestQuest: React.FC = () => {
         setTimeout(() => router.push('/user/dashboard'), 2000);
       }
       }
-    } catch (error: any) {
-      if(error.response.status === 403){
-        toast.error('Already Participated')
-      }
+    } catch (error) {
       console.error('Start test error:', error);
     } finally {
       setloadingStartTest(false)
@@ -383,7 +368,7 @@ const ContestQuest: React.FC = () => {
             <CardHeader>
               <CardTitle className="text-2xl text-center">Welcome to the Contest</CardTitle>
               <CardDescription className="text-center">
-                Ready to test your algorithmic skills? Click start when you're ready.
+                Ready to test your algorithmic skills? Click start when you&apos;re ready.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center space-y-4">
@@ -543,7 +528,7 @@ const ContestQuest: React.FC = () => {
                   End Test?
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                  Are you sure you want to leave? Your progress will be saved, but you won't be able to return to this test.
+                  Are you sure you want to leave? Your progress will be saved, but you won&apos;t be able to return to this test.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>

@@ -51,7 +51,7 @@ export default function Dashboard() {
     groupMembers: []
   });
   
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -67,8 +67,8 @@ export default function Dashboard() {
           groupName: contestsResponse.data.user.group?.name,
           groupMembers: contestsResponse.data.user.group?.members
         });
-      } catch (error: any) {
-        console.log(error.message)
+      } catch (error) {
+        console.log(error)
         toast.error('Unable to fetch dashboard data');
       }
     };

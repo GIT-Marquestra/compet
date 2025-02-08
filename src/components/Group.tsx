@@ -2,7 +2,7 @@
 'use client'
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Check, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -44,9 +44,8 @@ const AdminGroupCreator = () => {
             setError('Invalid users data received');
           }
         }
-      } catch (err: any) {
+      } catch (err) {
         console.error('Error:', err);
-        setError(err.message || 'Some error occurred');
       } finally {
         setIsLoading(false);
       }
@@ -87,7 +86,7 @@ const AdminGroupCreator = () => {
     setSuccess('');
 
     try {
-      const res = await axios.post('/api/groups/create', {
+      await axios.post('/api/groups/create', {
         name: groupName.trim(),
         users: selectedUsers,
         coordinator
@@ -97,8 +96,8 @@ const AdminGroupCreator = () => {
       setSelectedUsers([]);
       setCoordinator(null);
       setGroupName('');
-    } catch (err: any) {
-      setError(err.message || 'Failed to create group');
+    } catch (err) {
+      setError('Failed to create group');
     } finally {
       setIsSubmitting(false);
     }

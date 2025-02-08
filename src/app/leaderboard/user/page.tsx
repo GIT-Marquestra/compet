@@ -6,6 +6,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 
+interface Any {
+  id: string,
+  name: string,
+  username: string,
+  coordinatorName: string,
+  individualPoints: string,
+  groupPoints: string
+}
+
+
 const fetchLeaderboardData = async (endpoint: string) => {
   const response = await axios.post(endpoint);
   return response.data;
@@ -24,7 +34,7 @@ const LeaderboardPage = () => {
     queryFn: () => fetchLeaderboardData("/api/leaderboard/users"),
   });
 
-  const renderLeaderboardRow = (item: any, index: number, type: string) => (
+  const renderLeaderboardRow = (item: Any, index: number, type: string) => (
     <div key={item.id} className="flex items-center py-4 border-b border-gray-200">
       <div className="w-16 text-center font-bold">{index + 1}</div>
       <div className="flex-1">
@@ -65,7 +75,7 @@ const LeaderboardPage = () => {
                 {groupLoading ? (
                   <div className="text-center py-8">Loading group rankings...</div>
                 ) : (
-                  groupData?.map((group: any, index: number) =>
+                  groupData?.map((group: Any, index: number) =>
                     renderLeaderboardRow(group, index, "group")
                   )
                 )}
@@ -77,7 +87,7 @@ const LeaderboardPage = () => {
                 {userLoading ? (
                   <div className="text-center py-8">Loading individual rankings...</div>
                 ) : (
-                  userData?.map((user: any, index: number) =>
+                  userData?.map((user: Any, index: number) =>
                     renderLeaderboardRow(user, index, "individual")
                   )
                 )}

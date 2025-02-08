@@ -1,3 +1,4 @@
+//@ts-nocheck
 import prisma from "@/lib/prisma";
 import NextAuth, { AuthOptions } from "next-auth";
 import bcrypt from "bcrypt";

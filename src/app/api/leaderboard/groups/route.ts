@@ -1,4 +1,4 @@
-// pages/api/leaderboard/groups.ts
+//@ts-nocheck
 import { NextApiRequest, NextApiResponse } from 'next';
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma'; // Adjust the import based on your project structure

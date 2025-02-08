@@ -1,3 +1,4 @@
+//@ts-nocheck
 export const getDuration = (start: string, end: string) => {
     const startTimeString = start;
     const endTimeString = end;

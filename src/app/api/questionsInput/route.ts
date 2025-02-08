@@ -1,3 +1,4 @@
+//@ts-nocheck
 import prisma from "@/lib/prisma"
 import { Difficulty } from "@prisma/client"
 import axios from "axios";

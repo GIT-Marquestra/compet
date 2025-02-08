@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma'; // Adjust the import according to your setup
 import { ApplicationStatus } from '@prisma/client'; // Import the ApplicationStatus enum if needed

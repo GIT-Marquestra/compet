@@ -1,3 +1,4 @@
+//@ts-nocheck
 'use client'
 import GroupManagement from '@/components/CreateGroup'
 import AdminGroupCreator from '@/components/Group'

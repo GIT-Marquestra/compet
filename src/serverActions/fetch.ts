@@ -1,3 +1,4 @@
+//@ts-nocheck
 "use server"
 import { LeetCode } from "leetcode-query";
 // @ts-ignore

@@ -25,6 +25,7 @@ export default function SignIn() {
       if(result?.error){
         toast.error('Sign in Failed, check your credentials')
       } else {
+        console.log(result)
         toast.success('Signed In')
       }
     } catch (error) {

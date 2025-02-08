@@ -1,44 +1,24 @@
-// pages/api/leaderboard/users.ts
-import { NextApiRequest, NextApiResponse } from 'next';
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma'; // Adjust the import based on your project structure
+import prisma from '@/lib/prisma'; 
 
 interface LeaderboardEntry {
   id: string;
   username: string;
-  totalScore: number;
+  individualPoints: number,
 }
 
-export async function POST(req: Request) {
+export async function POST() {
   try {
-    // Fetch submissions and aggregate scores by user
-    const usersWithScores = await prisma.user.findMany({
+    const leaderboard: LeaderboardEntry[] = await prisma.user.findMany({
       select: {
         id: true,
         username: true,
-        individualPoints: true, // Use the individualPoints field for scores
-        submissions: {
-          select: {
-            score: true,
-          },
-        },
+        individualPoints: true,
+      },
+      orderBy: {
+        individualPoints: 'desc',
       },
     });
-
-    // Calculate total scores for each user based on submissions
-    const leaderboard: LeaderboardEntry[] = usersWithScores.map(user => {
-      const totalScore = user.submissions.reduce((acc, submission) => acc + submission.score, user.individualPoints);
-      return {
-        id: user.id,
-        username: user.username,
-        totalScore,
-      };
-    });
-
-    // Sort leaderboard by total scores in descending order
-    leaderboard.sort((a, b) => b.totalScore - a.totalScore);
-
-    console.log("Leaderboard: ", leaderboard)
 
     return NextResponse.json(leaderboard, { status: 200 });
   } catch (error) {

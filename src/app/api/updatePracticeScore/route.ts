@@ -4,7 +4,6 @@ import prisma from "@/lib/prisma"; // Ensure Prisma is correctly set up
 
 export async function POST(req: Request) {
   try {
-
     const session = await getServerSession();
     if (!session || !session.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -26,17 +25,42 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    
+    const existingSubmission = await prisma.submission.findFirst({
+      where: {
+        userId: user.id,
+        questionId: questionId,
+        contestId: contestId,
+      },
+    });
+
+    if (existingSubmission) {
+      return NextResponse.json({ message: "Submission already exists, no points awarded" });
+    }
+
+    await prisma.submission.create({
+      data: {
+        userId: user.id,
+        questionId: questionId,
+        contestId: contestId,
+        status: "ACCEPTED",
+        score: score,
+      },
+    });
+
     await prisma.user.update({
       where: { id: user.id },
       data: { individualPoints: { increment: score } },
     });
 
     if (user.groupId) {
+      // ✅ Update group’s total points
       await prisma.group.update({
         where: { id: user.groupId },
         data: { groupPoints: { increment: score } },
       });
 
+      // ✅ Update or create groupOnContest entry
       await prisma.groupOnContest.upsert({
         where: { groupId_contestId: { groupId: user.groupId, contestId } },
         update: { score: { increment: score } },
@@ -45,6 +69,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ message: "Score updated successfully" });
+
   } catch (error) {
     console.error("Error updating scores:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

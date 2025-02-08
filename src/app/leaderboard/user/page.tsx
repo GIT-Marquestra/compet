@@ -34,7 +34,7 @@ const LeaderboardPage = () => {
         )}
       </div>
       <div className="w-24 text-right font-bold">
-        {type === "group" ? item.groupPoints : item.totalScore} points
+        {type === "group" ? item.groupPoints : item.individualPoints} points
       </div>
     </div>
   );

@@ -21,7 +21,7 @@ import {
 
 interface Question {
   id: string;
-  questionId: string;
+  contestId: number;
   question: {
     id: string;
     leetcodeUrl: string | null;
@@ -128,6 +128,7 @@ const QuestionSolving = () => {
     platform: 'Leetcode' | 'Codeforces',
     problemName: string,
     questionId: string,
+    contestId: number,
     points: number
   ): Promise<void> => {
     if (verifiedProblems.has(questionId)) {
@@ -153,7 +154,7 @@ const QuestionSolving = () => {
             const awardedPoints = Math.floor(points / 2);
             animateScoreUpdate(score, score + awardedPoints);
             toast.success(`Problem verified! +${awardedPoints} points`);
-            await updateScoreInDatabase(questionId, awardedPoints);
+            await updateScoreInDatabase(questionId, contestId, awardedPoints);
           } else {
             toast.error('No accepted submission found');
           }
@@ -174,7 +175,7 @@ const QuestionSolving = () => {
             const awardedPoints = Math.floor(points / 2);
             animateScoreUpdate(score, score + awardedPoints);
             toast.success(`Problem verified! +${awardedPoints} points`);
-            await updateScoreInDatabase(questionId, awardedPoints);
+            await updateScoreInDatabase(questionId, contestId, awardedPoints);
           } else {
             toast.error('No accepted submission found');
           }
@@ -188,11 +189,11 @@ const QuestionSolving = () => {
     }
   };
 
-  const updateScoreInDatabase = async (questionId: string, points: number) => {
+  const updateScoreInDatabase = async (questionId: string, contestId: number, points: number) => {
     try {
       const response = await axios.post('/api/updatePracticeScore', {
         questionId,
-        userEmail: session?.user?.email,
+        contestId,
         score: points,
         headers: { 'Content-Type': 'application/json' },
       });
@@ -206,6 +207,8 @@ const QuestionSolving = () => {
     const func = async () => {
       const response = await axios.post('/api/questions');
       setQuestions(response.data.questions);
+      console.log(response.data.questions)
+      setScore(response.data.individualPoints)
     };
     func();
   }, []);
@@ -213,12 +216,12 @@ const QuestionSolving = () => {
   useEffect(() => {
     let filtered = questions;
 
-    // Apply difficulty filter
+    
     if (selectedDifficulty !== 'ALL') {
       filtered = filtered.filter(q => q.question.difficulty === selectedDifficulty);
     }
 
-    // Apply tag filter
+   
     if (selectedTags.length > 0) {
       filtered = filtered.filter(q => {
         const questionTagNames = q.question.questionTags.map(tag => tag.name);
@@ -366,6 +369,7 @@ const QuestionSolving = () => {
                         q.question.leetcodeUrl ? 'Leetcode' : 'Codeforces',
                         q.question.slug,
                         q.id,
+                        q.contestId,
                         q.question.points
                       )}
                       className={(isVerified || hasSubmission) ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20' : ''}

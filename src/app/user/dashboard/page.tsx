@@ -5,6 +5,8 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardDescription,
+  CardFooter,
 } from "@/components/ui/card"
 import {
   Table,
@@ -14,138 +16,207 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Clock, CheckCircle } from "lucide-react"
-import { fetchContests } from '@/serverActions/fetchContests';
+import { Button } from "@/components/ui/button"
+import { Trophy, Users, Target, ChevronRight, Award, Clock } from "lucide-react"
 import axios from 'axios';
 import Link from 'next/link';
-import { redirect } from 'next/dist/server/api-utils';
 import toast from 'react-hot-toast';
-import { getDuration } from '@/serverActions/getDuration';
 import { useSession } from 'next-auth/react';
+import { getDuration } from '@/serverActions/getDuration';
+import { cn } from "@/lib/utils"
 
-interface Contest {
-  id: string;
-  name: string;
-  date: string;
-  duration: string;
-  participants: number;
+interface UserStats {
+  totalSubmissions: number;
+  totalPoints: number;
+  groupName: string;
+  groupMembers: {
+    name: string;
+    points: number;
+  }[];
 }
 
-interface AttemptedContest extends Contest {
-  score: number;
-  rank: number;
+interface Contest {
+  id: number;
+  startTime: string;
+  endTime: string;
+  status: string;
 }
 
 export default function Dashboard() {
-    const [allContests, setAllContests] = useState<{
-        id: number,
-        startTime: Date,
-        endTime: Date,
-        status: string,
-        createdAt: Date,
-        updatedAt: Date
-      }[]>([])
-  // Sample data - replace with actual data fetching
-  const { data: session, status } = useSession()
-  useEffect(() => {
-    const func = async () => {
-
-        const contests = await axios.get('/api/getContests')
-        //@ts-ignore
-        if(contests){
-          setAllContests(contests.data.contests)
-        } else{
-          toast.error('Unable to Fetch Questions')
-        }
-    }
-    if(session?.user?.email){
-      func()
-    } else {
-      // todo 
-      console.log('not authenticate')
-    }
-
-  }, [])
-
+  const [latestContest, setLatestContest] = useState<Contest | null>(null);
+  const [userStats, setUserStats] = useState<UserStats>({
+    totalSubmissions: 0,
+    totalPoints: 0,
+    groupName: '',
+    groupMembers: []
+  });
   
+  const { data: session, status } = useSession();
 
-  const attemptedContests: AttemptedContest[] = [
-    { id: '1', name: 'Weekly Challenge 1', date: '2024-02-10', duration: '2h', participants: 150, score: 85, rank: 12 },
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const contestsResponse = await axios.get('/api/getData');
+        console.log(contestsResponse.data)
+        if (contestsResponse.data.contests.length > 0) {
+          setLatestContest(contestsResponse.data.latestContest);
+        }
+        
+        setUserStats({
+          totalSubmissions: contestsResponse.submissionCount,
+          totalPoints: contestsResponse.user.individualPoints,
+          groupName: contestsResponse.user.group?.name,
+          groupMembers: contestsResponse.user.group?.members
+        });
+      } catch (error) {
+        toast.error('Unable to fetch dashboard data');
+      }
+    };
 
+    if (session?.user?.email) {
+      fetchData();
+    }
+  }, [session]);
 
   return (
-    <div className="space-y-8 p-8 pt-20">
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
+    <div className="container mx-auto p-8 pt-20 space-y-8">
+      {/* User Stats Section */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card className="relative overflow-hidden">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              All Contests
+            <CardTitle className="flex items-center gap-2 text-primary">
+              <Target className="h-5 w-5" />
+              Total Submissions
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Number</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Duration</TableHead>
-                  <TableHead>Time</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {allContests.map((contest: any) => (
-                
-                  <TableRow key={contest.id}>
-                    <TableCell className="font-medium">{contest.id}</TableCell>
-                    <TableCell>{contest.startTime.split('T')[0]}</TableCell>
-                    <TableCell>{getDuration(contest.startTime, contest.endTime)}</TableCell>
-                    <TableCell>{contest.startTime.split('T')[1]}</TableCell>
-                    <TableCell>{contest.status}</TableCell>
-                    <TableCell><Link href={`/contest/${contest.id}`}>Attempt</Link></TableCell>
-                  </TableRow>
-
-                ))}
-              </TableBody>
-            </Table>
+            <p className="text-3xl font-bold">{userStats.totalSubmissions}</p>
           </CardContent>
+          <div className="absolute top-0 right-0 translate-x-1/3 -translate-y-1/3 w-24 h-24 bg-primary/10 rounded-full" />
         </Card>
 
-        <Card>
+        <Card className="relative overflow-hidden">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5" />
-              Attempted Contests
+            <CardTitle className="flex items-center gap-2 text-primary">
+              <Trophy className="h-5 w-5" />
+              Individual Points
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Score</TableHead>
-                  <TableHead>Rank</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {attemptedContests.map((contest) => (
-                  
-                <TableRow key={contest.id}>
-                    <TableCell className="font-medium">{contest.name}</TableCell>
-                    <TableCell>{contest.date}</TableCell>
-                    <TableCell>{contest.score}%</TableCell>
-                    <TableCell>{contest.rank}</TableCell>
-                    
-                </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <p className="text-3xl font-bold">{userStats.totalPoints}</p>
           </CardContent>
+          <div className="absolute top-0 right-0 translate-x-1/3 -translate-y-1/3 w-24 h-24 bg-primary/10 rounded-full" />
+        </Card>
+
+        <Card className="relative overflow-hidden">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-primary">
+              <Users className="h-5 w-5" />
+              Group: {userStats.groupName ? userStats.groupName : 'Null'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">
+              {userStats.groupMembers.reduce((sum, member) => sum + member.points, 0)}
+            </p>
+          </CardContent>
+          <div className="absolute top-0 right-0 translate-x-1/3 -translate-y-1/3 w-24 h-24 bg-primary/10 rounded-full" />
         </Card>
       </div>
+
+      {/* Latest Contest Section */}
+      <Card className="relative overflow-hidden border-2 border-primary/20">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-secondary/5" />
+        <CardHeader className="relative">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-2xl flex items-center gap-2 text-primary">
+                <Award className="h-6 w-6" />
+                Latest Contest
+              </CardTitle>
+              <CardDescription>
+                Ready for your next challenge?
+              </CardDescription>
+            </div>
+            <Button variant="outline" size="icon">
+              <Clock className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="relative">
+          {latestContest ? (
+            <div className="space-y-6">
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="p-4 rounded-lg bg-card">
+                  <p className="text-sm text-muted-foreground">Date</p>
+                  <p className="text-lg font-medium">{new Date(latestContest.startTime).toLocaleDateString()}</p>
+                </div>
+                <div className="p-4 rounded-lg bg-card">
+                  <p className="text-sm text-muted-foreground">Duration</p>
+                  <p className="text-lg font-medium">{getDuration(latestContest.startTime, latestContest.endTime)}</p>
+                </div>
+                <div className="p-4 rounded-lg bg-card">
+                  <p className="text-sm text-muted-foreground">Status</p>
+                  <p className="text-lg font-medium">{latestContest.status}</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-muted-foreground">No contests available at the moment.</p>
+          )}
+        </CardContent>
+        <CardFooter className="relative">
+          {latestContest && (
+            <Button size="lg" className="w-full sm:w-auto" asChild>
+              <Link href={`/contest/${latestContest.id}`}>
+                Attempt Contest <ChevronRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          )}
+        </CardFooter>
+      </Card>
+
+      {/* Group Members Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-primary">
+            <Users className="h-5 w-5" />
+            Group Members
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Member</TableHead>
+                <TableHead>Points</TableHead>
+                <TableHead className="text-right">Rank</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {userStats.groupMembers
+                .sort((a, b) => b.points - a.points)
+                .map((member, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="font-medium">{member.name}</TableCell>
+                    <TableCell>{member.points}</TableCell>
+                    <TableCell className="text-right">
+                      <span className={cn(
+                        "px-2 py-1 rounded-full text-xs font-medium",
+                        index === 0 && "bg-primary/10 text-primary",
+                        index === 1 && "bg-secondary/10 text-secondary",
+                        index === 2 && "bg-muted text-muted-foreground"
+                      )}>
+                        #{index + 1}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }
+

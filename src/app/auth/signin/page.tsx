@@ -20,7 +20,7 @@ export default function SignIn() {
         username,
         password,
         redirect: true,
-        callbackUrl: '/'
+        callbackUrl: '/user/dashboard'
       });
       if(result?.error){
         toast.error('Sign in Failed, check your credentials')

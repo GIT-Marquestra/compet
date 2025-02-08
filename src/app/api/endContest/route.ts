@@ -1,10 +1,13 @@
 import prisma from "@/lib/prisma";
+import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
     try {
+        const session = await getServerSession()
+        const userEmail = session?.user?.email
         const body = await req.json();
-        const { contestId, userEmail, finalScore, questions } = body;
+        const { contestId, finalScore, questions } = body;
         console.log(body);
 
         if (!contestId || !userEmail || typeof finalScore !== "number" || !Array.isArray(questions)) {
@@ -12,6 +15,7 @@ export async function POST(req: NextRequest) {
         }
 
         const contestID = parseInt(contestId);
+
         const user = await prisma.user.findUnique({
             where: { email: userEmail },
             include: { group: { include: { members: true } } },
@@ -42,13 +46,12 @@ export async function POST(req: NextRequest) {
                             questionId: question.question.id,
                             contestId: contestID,
                             status: "ACCEPTED",
-                            score: finalScore / questions.length,
+                            score: question.question.points,
                         },
                     });
                 })
             );
 
-            // Calculate user's total individual points
             const userSubmissions = await prisma.submission.findMany({
                 where: { userId: user.id, status: "ACCEPTED" },
                 select: { score: true },
@@ -61,10 +64,10 @@ export async function POST(req: NextRequest) {
             });
 
             if (user.groupId && user.group) {
-                // Fetch latest contest
+
                 const latestContest = await prisma.contest.findFirst({ orderBy: { id: "desc" } });
 
-                // Handle group scoring logic
+ 
                 const existingGroupAttempt = await prisma.groupOnContest.findUnique({
                     where: { groupId_contestId: { groupId: user.groupId, contestId: contestID } },
                 });
@@ -81,7 +84,7 @@ export async function POST(req: NextRequest) {
                     update: { score: { increment: groupScore } },
                 });
 
-                // Update ranks
+               
                 const groupsInContest = await prisma.groupOnContest.findMany({
                     where: { contestId: contestID },
                     orderBy: { score: "desc" },
@@ -94,7 +97,7 @@ export async function POST(req: NextRequest) {
                     });
                 }
 
-                // Update total group points
+      
                 const totalGroupPoints = await prisma.groupOnContest.findMany({
                     where: { groupId: user.groupId },
                     select: { score: true },
@@ -107,7 +110,7 @@ export async function POST(req: NextRequest) {
                 });
             }
 
-            // Check if all members submitted
+            
             const allMembersSubmissions = await prisma.submission.findMany({
                 where: { contestId: contestID, userId: { in: user.group?.members.map(m => m.id) || [] } },
                 distinct: ["userId"],

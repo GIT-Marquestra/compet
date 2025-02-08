@@ -60,8 +60,8 @@ export async function POST(
     });
 
     return NextResponse.json({ groups, userGroup }, { status: 200 });
-  } catch (error: any) {
-    console.log(error.message)
+  } catch (error) {
+    console.log(error)
     return NextResponse.json({ error: 'Failed to fetch groups' }, { status: 500 });
   }
 }

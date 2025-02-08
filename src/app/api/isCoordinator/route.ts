@@ -24,8 +24,8 @@ export async function POST(req: Request) {
     const isCoordinator = user.group?.coordinatorId === user.id;
 
     return NextResponse.json({ isCoordinator }, { status: 200 });
-  } catch (error: any) {
-    console.error("Error checking coordinator status:", error.message);
+  } catch (error) {
+    console.error("Error checking coordinator status:", error);
     return NextResponse.json({ error: "Failed to check coordinator status" }, { status: 500 });
   }
 }

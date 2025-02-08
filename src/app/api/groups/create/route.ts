@@ -88,11 +88,8 @@ export async function POST(req: Request) {
 
       return NextResponse.json({ group, message: "Group created successfully" }, { status: 200 });
     }
-  } catch (error: any) {
-    console.error("Error creating/updating group:", error.message);
-    if (error.code === "P2002") {
-      return NextResponse.json({ error: "Group name already exists" }, { status: 400 });
-    }
+  } catch (error) {
+    console.error("Error creating/updating group:", error);
     return NextResponse.json({ error: "Failed to create/update group" }, { status: 500 });
   }
 }

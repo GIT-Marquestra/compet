@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -65,30 +65,31 @@ export default function AllQuestions() {
   const [filteredQuestions, setFilteredQuestions] = useState<Question[]>([]);
   const [show, setShow] = useState(true)
 
-  useEffect(() => {
-    const fetchQuestions = async () => {
-      try {
-        // await new Promise((r) => (setTimeout(r, 5000)))
-        const res = await axios.post('/api/checkIfAdmin')
-        const response = await axios.post<{ questions: Question[] }>("/api/getQuestions");
-        if(!res.data.isAdmin) {
-          setShow(false)
-          return
-        } 
-        console.log(res.data.isAdmin)
-        if(res.data.isAdmin) setShow(true)
-        
-        console.log('response: ', response)
-        setQuestions(response.data.questions);
-        setFilteredQuestions(response.data.questions);
-      } catch (error) {
-        console.error("Error fetching questions:", error);
-        toast.error("Failed to fetch questions");
-      }
-    };
 
-    fetchQuestions();
+  const fetchQuestions = useCallback(async () => {
+    try {
+      // await new Promise((r) => (setTimeout(r, 5000)))
+      const res = await axios.post('/api/checkIfAdmin')
+      const response = await axios.post<{ questions: Question[] }>("/api/getQuestions");
+      if(!res.data.isAdmin) {
+        setShow(false)
+        return
+      } 
+      console.log(res.data.isAdmin)
+      if(res.data.isAdmin) setShow(true)
+      
+      console.log('response: ', response)
+      setQuestions(response.data.questions);
+      setFilteredQuestions(response.data.questions);
+    } catch (error) {
+      console.error("Error fetching questions:", error);
+      toast.error("Failed to fetch questions");
+    }
   }, []);
+
+  useEffect(() => {
+    fetchQuestions();
+  }, [fetchQuestions]);
 
   const getDifficultyColor = (difficulty: string): string => {
     const colors: Record<string, string> = {

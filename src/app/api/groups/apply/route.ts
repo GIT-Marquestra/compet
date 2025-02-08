@@ -64,8 +64,8 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ application }, { status: 201 });
-  } catch (error: any) {
-    console.error('Error applying to group:', error.message); // Log the error for debugging
+  } catch (error) {
+    console.error('Error applying to group:', error); // Log the error for debugging
     return NextResponse.json({ error: 'Failed to apply to group' }, { status: 500 });
   }
 }

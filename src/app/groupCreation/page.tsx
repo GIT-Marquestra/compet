@@ -10,7 +10,7 @@ interface Group {
   name: string
 } 
 
-function page() {
+function Page() {
   const [show, setShow] = useState('')
   const [group, setGroup] = useState<Group>()
   useEffect(() => {
@@ -43,4 +43,4 @@ function page() {
   )
 }
 
-export default page
+export default Page

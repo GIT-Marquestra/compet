@@ -3,7 +3,8 @@ import { getServerSession } from "next-auth";
 import prisma from "@/lib/prisma";
 
 export async function POST() {
-  const session = await getServerSession();
+  try {
+    const session = await getServerSession();
 
   if (!session || !session.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -22,4 +23,8 @@ export async function POST() {
 
 
   return NextResponse.json({ username: user.username }, { status: 200 });
+  } catch (error) {
+    console.log(error)
+    return NextResponse.json({ error }, { status: 200 });
+  }
 }

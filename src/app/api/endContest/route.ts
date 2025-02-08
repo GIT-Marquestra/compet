@@ -131,8 +131,8 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ message: result.message }, { status: 200 });
 
-    } catch (error: any) {
-        console.error("Error processing contest submissions:", error.message);
+    } catch (error) {
+        console.error("Error processing contest submissions:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

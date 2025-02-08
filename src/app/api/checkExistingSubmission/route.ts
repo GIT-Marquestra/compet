@@ -37,8 +37,8 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ solved: !!solvedSubmission });
-  } catch (error: any) {
-    console.error('Error checking problem solution:', error.message);
+  } catch (error) {
+    console.error('Error checking problem solution:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   } finally {
     await prisma.$disconnect();

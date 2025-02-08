@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -35,11 +35,35 @@ const GroupManagement = () => {
   const router = useRouter();
   const { data: session } = useSession();
 
+
+  const fetchUserGroups = useCallback(async () => {
+    try {
+      const response = await axios.post('/api/groups', {
+        body: {
+          userEmail: session?.user?.email,
+        },
+      });
+      if (response.data.userGroup) {
+        setUserGroups(response.data.userGroup);
+      }
+    } catch (err) {
+      const error = err as Error;
+      toast.error('Failed to fetch your groups');
+    }
+}, []);
+
   useEffect(() => {
     if (session?.user?.email) {
       fetchUserGroups();
     }
-  }, [session]);
+  }, [session, fetchUserGroups]);
+  
+
+// useEffect(() => {
+//     if (session?.user?.email) {
+//         fetchUserGroups();
+//     }
+// }, [session, fetchUserGroups]);
 
   const handleApply = async (groupId: string) => {
     try {
@@ -102,21 +126,9 @@ const GroupManagement = () => {
     }
   };
 
-  const fetchUserGroups = async () => {
-    try {
-      const response = await axios.post('/api/groups', {
-        body: {
-          userEmail: session?.user?.email,
-        },
-      });
-      if (response.data.userGroup) {
-        setUserGroups(response.data.userGroup);
-      }
-    } catch (err) {
-      const error = err as Error;
-      toast.error('Failed to fetch your groups');
-    }
-  };
+  // const fetchUserGroups = async () => {
+    
+  // };
 
   return (
     <Card className="w-full max-w-2xl mx-auto mt-20">

@@ -25,8 +25,8 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ group: user.group }, { status: 200 });
-  } catch (error: any) {
-    console.error("Error fetching group:", error.message);
+  } catch (error) {
+    console.error("Error fetching group:", error);
     return NextResponse.json({ error: "Failed to fetch group" }, { status: 500 });
   }
 }

@@ -50,8 +50,8 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ message: 'Successfully left the group' }, { status: 200 });
-  } catch (error: any) {
-    console.error('Error leaving group:', error.message);
+  } catch (error) {
+    console.error('Error leaving group:', error);
     return NextResponse.json({ error: 'Failed to leave group' }, { status: 500 });
   }
 }

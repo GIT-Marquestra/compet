@@ -122,8 +122,8 @@ export async function POST(req: Request) {
       // No contests exist
       return NextResponse.json({ questions: [], individualPoints: user.individualPoints, submissions: userSubmissions }, { status: 200 });
     }
-  } catch (error: any) {
-    console.error('Error fetching questions:', error.message);
+  } catch (error) {
+    console.error('Error fetching questions:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   } finally {
     await prisma.$disconnect();

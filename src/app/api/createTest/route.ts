@@ -41,8 +41,7 @@ export async function POST(req: Request) {
     });
     return NextResponse.json({ user }, { status: 200 });
   } catch (error) {
-    // @ts-ignore
-    console.error(error.message)
+    console.error(error)
     return NextResponse.json({ error: "User creation failed" }, { status: 400 });
   }
 }

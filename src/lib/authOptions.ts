@@ -21,8 +21,6 @@ export const authOptions: AuthOptions = {
         });
 
         if (!user) return null;
-
-
         // Compare password with hashed password in DB
         const passwordMatch = await bcrypt.compare(credentials.password, user.password);
         if (!passwordMatch) return null;
@@ -34,7 +32,7 @@ export const authOptions: AuthOptions = {
     signIn: "/auth/signin"
   },
   callbacks: {
-    async session({ session, user }) {
+    async session({ session }) {
       // Attach userId to session
       const dbUser = await prisma.user.findUnique({
         where: { username: session.user?.name || "" }

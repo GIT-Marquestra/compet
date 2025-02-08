@@ -22,11 +22,11 @@ export default function SignIn() {
         redirect: true,
         callbackUrl: '/user/dashboard'
       });
-      if(result?.error){
+      if(result?.status === 302){
         toast.error('Sign in Failed, check your credentials')
       } else {
         console.log(result)
-        toast.success('Signed In')
+        toast.error('Signed In Failed')
       }
     } catch (error) {
       console.log(error)

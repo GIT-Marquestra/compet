@@ -5,8 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Code2, Users, Trophy, Brain, CheckCircle, ExternalLink, Sparkles } from "lucide-react";
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
+
 
 const HeroSection = () => {
+  const { data: session } = useSession()
   return (
     <div className="relative min-h-screen">
       {/* Enhanced gradient background with subtle color mix */}
@@ -35,11 +38,11 @@ const HeroSection = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-            <Button size="lg" className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-300" asChild>
+            {!session && <Button size="lg" className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-300" asChild>
               <Link href="/auth/signup">
                 Get Started <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
-            </Button>
+            </Button>}
           </div>
         </div>
 
@@ -144,11 +147,11 @@ const HeroSection = () => {
           <p className="text-muted-foreground mb-8 max-w-2xl mx-auto relative">
             Join our community of competitive programmers and start improving your skills today.
           </p>
-          <Button size="lg" className="relative bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-300" asChild>
+          {!session && <Button size="lg" className="relative bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-300" asChild>
             <Link href="/auth/signup">
               Get Started Now <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
-          </Button>
+          </Button>}
         </div>
       </div>
     </div>

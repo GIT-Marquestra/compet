@@ -34,7 +34,7 @@ export const authOptions: AuthOptions = {
     signIn: "/auth/signin"
   },
   callbacks: {
-    async session({ session }) {
+    async session({ session, user }) {
       // Attach userId to session
       const dbUser = await prisma.user.findUnique({
         where: { username: session.user?.name || "" }

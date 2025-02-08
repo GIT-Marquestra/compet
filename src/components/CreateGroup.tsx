@@ -161,9 +161,9 @@ const GroupManagement = () => {
                     <p className="text-sm text-gray-500">Members: {group._count.members}</p>
                     <p className="text-sm text-gray-500">Coordinator: {group.coordinator.username}</p>
                   </div>
-                  <Button variant="outline" onClick={() => handleApply(group.id)}>
+                  {/* <Button variant="outline" onClick={() => handleApply(group.id)}>
                     Apply
-                  </Button>
+                  </Button> */}
                 </div>
               ))}
               {existingGroups.length === 0 && <p className="text-center text-gray-500">No groups found</p>}

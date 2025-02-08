@@ -26,7 +26,7 @@ const HeroSection = () => {
           
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight">
             Master DSA
-            <span className="text-primary block mt-2 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80">Together</span>
+            <span className="text-primary block mt-2 bg-clip-text bg-gradient-to-r from-primary to-primary/80">Together</span>
           </h1>
           
           <p className="text-xl text-muted-foreground">

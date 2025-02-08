@@ -68,11 +68,17 @@ export default function AllQuestions() {
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const response = await axios.get<{ questions: Question[] }>("/api/getQuestions");
-        if(response.status === 430){
+        // await new Promise((r) => (setTimeout(r, 5000)))
+        const res = await axios.post('/api/checkIfAdmin')
+        const response = await axios.post<{ questions: Question[] }>("/api/getQuestions");
+        if(!res.data.isAdmin) {
           setShow(false)
           return
-        }
+        } 
+        console.log(res.data.isAdmin)
+        if(res.data.isAdmin) setShow(true)
+        
+        console.log('response: ', response)
         setQuestions(response.data.questions);
         setFilteredQuestions(response.data.questions);
       } catch (error) {
@@ -376,7 +382,7 @@ export default function AllQuestions() {
           </Card>
         </div>
       </div>
-      </div> : <div>Not an Admin</div>}</>
+      </div> : <div className='flex justify-center'>Not an Admin</div>}</>
    
   );
 }

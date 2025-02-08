@@ -4,11 +4,32 @@ import { useSession } from 'next-auth/react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Timer, ExternalLink, CheckCircle, Check, Loader2 } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Timer,
+  ExternalLink,
+  CheckCircle,
+  Check,
+  Loader2,
+  Trophy,
+  AlertTriangle,
+  Play
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Difficulty } from '@prisma/client';
+
 import { fetchLatestSubmissionsCodeForces, fetchLatestSubmissionsLeetCode } from '@/serverActions/fetch';
 import axios from 'axios';
 
@@ -58,14 +79,20 @@ const ContestQuest: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const params = useParams();
   const id = params.num?.[0];
+  const [username, setUsername] = useState('')
+  const [loadingStartTest, setloadingStartTest] = useState(false)
   const [resLeet, setResLeet] = useState<string>();
   const [resCodef, setResCodef] = useState<string>();
   const [score, setScore] = useState<number>(0);
-  const [timeLeft, setTimeLeft] = useState<number>(7200); // 2 hours in seconds
+  const [timeLeft, setTimeLeft] = useState<number>(0); // 2 hours in seconds
   const [questions, setQuestions] = useState<Question[]>([]);
   const [verifiedProblems, setVerifiedProblems] = useState<Set<string>>(new Set());
   const [isScoreUpdating, setIsScoreUpdating] = useState<boolean>(false);
   const [isEndingTest, setIsEndingTest] = useState<boolean>(false);
+  const [progress, setProgress] = useState(0);
+  const [lusername, setLUsername] = useState('')
+  const [cusername, setCUsername] = useState('')
+  const [isVerifying, setIsVerifying] = useState<Record<string, boolean>>({});
   const animateScoreUpdate = (oldScore: number, newScore: number) => {
     setIsScoreUpdating(true);
     let current = oldScore;
@@ -121,9 +148,29 @@ const ContestQuest: React.FC = () => {
     }
   };
 
+
+  useEffect(() => {
+    const checkIfAdmin = async () => {
+      try {
+        const usernameResponse = await axios.post('/api/getUsername') 
+        const resL = await axios.post('/api/user/leetcode/username')
+        const resC = await axios.post('/api/user/codeforces/username')
+        setCUsername(resC.data.codeforcesUsername)
+        setLUsername(resL.data.leetcodeUsername)
+        setUsername(usernameResponse.data.username);
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    checkIfAdmin()
+    
+  }, []);
+
   
 
   useEffect(() => {
+     
     const handleBack = () => {
       setShowModal(true);
       window.history.pushState(null, "", window.location.pathname); // Prevents actual back
@@ -135,6 +182,13 @@ const ContestQuest: React.FC = () => {
       window.removeEventListener("popstate", handleBack);
     };
   }, []);
+  useEffect(() => {
+    if (questions.length > 0) {
+      const completedCount = verifiedProblems.size;
+      const newProgress = (completedCount / questions.length) * 100;
+      setProgress(newProgress);
+    }
+  }, [verifiedProblems, questions]);
 
   useEffect(() => {
     const handleUnload = (event: BeforeUnloadEvent) => {
@@ -211,15 +265,19 @@ const ContestQuest: React.FC = () => {
       toast.error('Problem already verified!');
       return;
     }
-
-    const username = 'Abhi_Verma2678'; // This should come from user profile
     try {
+      setIsVerifying({ ...isVerifying, [questionId]: true });
       if (platform === "Leetcode") {
-        const res = await fetchLatestSubmissionsLeetCode(username);
+        
+        const res = await fetchLatestSubmissionsLeetCode(lusername);
+
+        
+        if(!resLeet) return 
         if (res?.recentSubmissionList) {
           const solved = res.recentSubmissionList.find(//@ts-ignore
-            (p: LeetCodeSubmission) => p.titleSlug === problemName && p.statusDisplay === 'Accepted' && p.timestamp > resLeet
+            (p: LeetCodeSubmission) => p.titleSlug === problemName && p.statusDisplay === 'Accepted' && parseInt(p.timestamp) > parseInt(resLeet)
           );
+          console.log(solved)
           if (solved) {
             setVerifiedProblems(prev => new Set([...prev, questionId]));
             animateScoreUpdate(score, score + points);
@@ -229,7 +287,7 @@ const ContestQuest: React.FC = () => {
           }
         }
       } else {
-        const res = await fetchLatestSubmissionsCodeForces(username);
+        const res = await fetchLatestSubmissionsCodeForces(cusername);
         if (res) {
           const solved = res.find(//@ts-ignore
             (p: CodeForcesSubmission) => p.problem.name === problemName && p.verdict === 'OK' && p.creationTimeSeconds > parseInt(resCodef)
@@ -244,110 +302,150 @@ const ContestQuest: React.FC = () => {
         }
       }
 
-      try {
-        await axios.post('/api/updateScore', {
-          contestId: id,
-          //@ts-ignore
-          userId: session?.user?.id,
-          score: score + points,
-          questionId: questionId
-        });
-      } catch (error) {
-        console.error('Failed to update score on server:', error);
-      }
+      // try {
+      //   await axios.post('/api/updateScore', {
+      //     contestId: id,
+      //     //@ts-ignore
+      //     userId: session?.user?.id,
+      //     score: score + points,
+      //     questionId: questionId
+      //   });
+      // } catch (error) {
+      //   console.error('Failed to update score on server:', error);
+      // }
 
     } catch (error) {
       toast.error('Error verifying submission');
       console.error('Verification error:', error);
+    } finally {
+      setIsVerifying({ ...isVerifying, [questionId]: false });
     }
   };
 
   const handleStartTest = async (): Promise<void> => {
     try {
+      setloadingStartTest(true)
       const response = await axios.post<ApiResponse>('/api/startContest', {
         headers: { "Content-Type": "application/json" },
         body: { user: session?.user, contestId: id }
       });
 
-      console.log(response)
       // console.log(response.data.remainingTime)
-
-        const resLeet = await fetchLatestSubmissionsLeetCode('Abhi_Verma2678')
-        if(!resLeet) return 
-        if(!(resLeet.recentSubmissionList)) return
-        const leetTime = resLeet?.recentSubmissionList[0].timestamp
-        if(leetTime) setResLeet(leetTime)
+      
+      
+      const resLeet = await fetchLatestSubmissionsLeetCode(lusername)
+      if(!resLeet) return 
+      if(!(resLeet.recentSubmissionList)) return
+      const leetTime = resLeet?.recentSubmissionList[0].timestamp
+      if(leetTime) setResLeet(leetTime)
+      const resCodef = await fetchLatestSubmissionsCodeForces(cusername)
+      if(!resCodef) return
+      console.log(response)
+      const codefTime = resCodef[0].creationTimeSeconds
+      setResCodef(codefTime)
+      if(resCodef) setResCodef(resCodef) 
+      //@ts-ignore
+      setTimeLeft(response.data.remainingTime + 60)
         
-        const resCodef = await fetchLatestSubmissionsCodeForces('Abhi_Verma2678')
-        if(!resCodef) return
-        const codefTime = resCodef[0].creationTimeSeconds
-        setResCodef(codefTime)
-        if(resCodef) setResCodef(resCodef)
-        if (response.data.questions) {
-          setShow(true);
-          setQuestions(response.data.questions);
-        }
+      console.log(response.status)
+        
+      if (response.data.questions) {
+        setShow(true);
+        setQuestions(response.data.questions);
+      }
       if (response.data.status === 200) {
         toast.success('Test Started')
       } else {
         const errorMessages: Record<number, string> = {
-          420: 'Test Entry Closed!',
-          404: 'To attempt Tests become member of a Group',
-          400: 'Not Authenticated, Please SignIn',
-        };
-        toast.error(errorMessages[response.data.status] || "Unknown Error");
-        if (response.data.status === 404) {
-          setTimeout(() => router.push('/user/dashboard'), 2000);
-        }
+        420: 'Test Entry Closed!',
+        404: 'To attempt Tests become member of a Group',
+        400: 'Not Authenticated, Please SignIn',
+      };
+      toast.error(errorMessages[response.data.status] || "Unknown Error");
+      if (response.data.status === 404) {
+        setTimeout(() => router.push('/user/dashboard'), 2000);
       }
-    } catch (error) {
-      toast.error('Failed to start test');
+      }
+    } catch (error: any) {
+      if(error.response.status === 403){
+        toast.error('Already Participated')
+      }
       console.error('Start test error:', error);
+    } finally {
+      setloadingStartTest(false)
     }
   };
 
   return (
-    <div className="container mx-auto p-4 pt-20">
+    <div className="min-h-screen bg-background">
       {!show ? (
-        <div className="flex justify-center">
-          <Button size="lg" onClick={handleStartTest}>
-            Start Test
-          </Button>
+        <div className="container mx-auto p-4 pt-20">
+          <Card className="max-w-2xl mx-auto">
+            <CardHeader>
+              <CardTitle className="text-2xl text-center">Welcome to the Contest</CardTitle>
+              <CardDescription className="text-center">
+                Ready to test your algorithmic skills? Click start when you're ready.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center space-y-4">
+              <div className="rounded-full bg-primary/10 p-6">
+                <Play className="h-12 w-12 text-primary" />
+              </div>
+              <Button size="lg" onClick={handleStartTest} className="w-full max-w-sm">
+                {loadingStartTest ? <span>Starting...</span> : <span>Start Test</span>}
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="container mx-auto p-4 pt-20 space-y-6">
           <Card className="sticky top-16 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <CardContent className="flex items-center justify-between py-6">
-              <div className="flex items-center space-x-2">
-                <Timer className="h-5 w-5" />
-                <span className={`text-2xl font-bold ${timeLeft < 300 ? 'text-red-500' : ''}`}>
-                  {formatTime(timeLeft)}
-                </span>
-              </div>
-              <div className="flex items-center space-x-4">
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground">Current Score</p>
-                  <p className={`text-2xl font-bold transition-colors duration-200 ${
-                    isScoreUpdating ? 'text-green-500' : ''
-                  }`}>
-                    {score}
-                  </p>
+            <CardContent className="py-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 rounded-full bg-primary/10">
+                    <Timer className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Time Remaining</p>
+                    <span className={`text-2xl font-bold ${timeLeft < 300 ? 'text-destructive animate-pulse' : ''}`}>
+                      {formatTime(timeLeft)}
+                    </span>
+                  </div>
                 </div>
-                <Button
-                  variant="destructive"
-                  onClick={handleEndTest}
-                  disabled={isEndingTest}
-                  className="ml-4"
-                >
-                  {isEndingTest ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Ending Test...
-                    </>
-                  ) : (
-                    'End Test'
-                  )}
-                </Button>
+
+                <div className="flex flex-col space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Progress</span>
+                    <span className="text-sm font-medium">{Math.round(progress)}%</span>
+                  </div>
+                  <Progress value={progress} className="h-2" />
+                </div>
+
+                <div className="flex items-center justify-end space-x-4">
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">Current Score</p>
+                    <p className={`text-2xl font-bold transition-colors duration-200 ${
+                      isScoreUpdating ? 'text-green-500' : ''
+                    }`}>
+                      {score}
+                    </p>
+                  </div>
+                  <Button
+                    variant="destructive"
+                    onClick={handleEndTest}
+                    disabled={isEndingTest}
+                  >
+                    {isEndingTest ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Ending Test...
+                      </>
+                    ) : (
+                      'End Test'
+                    )}
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -358,18 +456,21 @@ const ContestQuest: React.FC = () => {
               return (
                 <Card 
                   key={q.id}
-                  className={`transition-colors duration-200 ${
-                    isVerified ? 'bg-green-500/5 border-green-500/20' : ''
+                  className={`transition-all duration-300 ${
+                    isVerified ? 'bg-green-500/5 border-green-500/20 shadow-green-500/10' : 'hover:shadow-lg'
                   }`}
                 >
-                  <CardHeader>
+                  <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <CardTitle className="text-xl">
                           Question {index + 1}
                         </CardTitle>
                         {isVerified && (
-                          <Check className="h-5 w-5 text-green-500" />
+                          <Badge variant="secondary" className="bg-green-500/10 text-green-500">
+                            <Check className="h-3 w-3 mr-1" />
+                            Solved
+                          </Badge>
                         )}
                       </div>
                       <Badge 
@@ -382,12 +483,15 @@ const ContestQuest: React.FC = () => {
                       </Badge>
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm text-muted-foreground">
-                        Points: {q.question.points}
-                      </p>
-                      <div className="flex space-x-4">
+                  <CardContent className="pt-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex items-center space-x-2">
+                        <Trophy className="h-4 w-4 text-primary" />
+                        <span className="text-sm text-muted-foreground">
+                          Points: {q.question.points}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
                         <Link 
                           href={q.question.leetcodeUrl || q.question.codeforcesUrl || '#'}
                           target="_blank"
@@ -396,7 +500,7 @@ const ContestQuest: React.FC = () => {
                           <Button 
                             variant="outline" 
                             size="sm"
-                            className={isVerified ? 'opacity-75' : ''}
+                            className={`${isVerified ? 'opacity-75' : ''} transition-all`}
                           >
                             Solve <ExternalLink className="ml-2 h-4 w-4" />
                           </Button>
@@ -411,13 +515,18 @@ const ContestQuest: React.FC = () => {
                             q.id,
                             q.question.points
                           )}
-                          className={isVerified ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20' : ''}
+                          className={`${isVerified ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20' : ''} transition-all`}
                         >
-                          {isVerified ? (
-                            <>Verified <Check className="ml-2 h-4 w-4" /></>
-                          ) : (
-                            <>Verify <CheckCircle className="ml-2 h-4 w-4" /></>
-                          )}
+                          {isVerifying[q.id] ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Verifying...
+                        </>
+                      ) : (isVerified) ? (
+                        <>Verified <Check className="ml-2 h-4 w-4" /></>
+                      ) : (
+                        <>Verify <CheckCircle className="ml-2 h-4 w-4" /></>
+                      )}
                         </Button>
                       </div>
                     </div>
@@ -426,22 +535,27 @@ const ContestQuest: React.FC = () => {
               );
             })}
           </div>
-          {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-4 rounded-lg shadow-lg">
-            <h2>End Test?</h2>
-            <p>Are you sure you want to leave? Your progress will be lost.</p>
-            <button onClick={() => setShowModal(false)} className="mr-4 bg-blue-500 text-white px-3 py-2 rounded">
-              Cancel
-            </button>
-            <button onClick={confirmExit} className="bg-red-500 text-white px-3 py-2 rounded">
-              End Test
-            </button>
-          </div>
+
+          <AlertDialog open={showModal}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-destructive" />
+                  End Test?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to leave? Your progress will be saved, but you won't be able to return to this test.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setShowModal(false)}>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={confirmExit} className="bg-destructive text-destructive-foreground">
+                  End Test
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
-      )}
-        </div>
-        
       )}
     </div>
   );

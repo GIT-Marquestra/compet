@@ -5,7 +5,6 @@ import { getServerSession } from 'next-auth';
 
 export async function POST(req: Request) {
     try {
-        const request = await req.json();
         const session = await getServerSession()
         const userEmail = session?.user?.email
 
@@ -21,6 +20,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "User not provided" }, { status: 400 });
         }
 
+        
         // Get the latest contest
         const contest = await prisma.contest.findFirst({
             orderBy: {
@@ -34,6 +34,22 @@ export async function POST(req: Request) {
                 }
             }
         });
+
+
+        if(!contest) return 
+
+        const existingSubmission = await prisma.submission.findFirst({
+            where: {
+                userId: user.id,
+                contestId: contest.id
+            }
+        });
+        
+        if (existingSubmission) {
+            return NextResponse.json({
+                error: "User has already participated in this contest"
+            }, { status: 403 });
+        }
 
         if (!contest) {
             return NextResponse.json({ error: "No contest found" }, { status: 404 });
@@ -113,7 +129,10 @@ export async function POST(req: Request) {
         }
 
         const expiryTime = new Date(contestStart.getTime() + (duration * 60 * 60 * 1000)); // Convert hours to milliseconds
+        console.log(expiryTime.getTime())
         const remainingTime = Math.floor((expiryTime.getTime() - currentTimeIST.getTime()) / 1000);
+
+        console.log(remainingTime)
 
         return NextResponse.json({
             message: "User can take the test",

@@ -30,8 +30,8 @@ interface UserStats {
   totalPoints: number;
   groupName: string;
   groupMembers: {
-    name: string;
-    points: number;
+    username: string;
+    individualPoints: number;
   }[];
 }
 
@@ -117,7 +117,7 @@ export default function Dashboard() {
           </CardHeader>
           {userStats.groupName && <CardContent>
             <p className="text-3xl font-bold">
-              {userStats.groupMembers.reduce((sum, member) => sum + member.points, 0)}
+              {userStats.groupMembers.reduce((sum, member) => sum + member.individualPoints, 0)}
             </p>
           </CardContent>}
           <div className="absolute top-0 right-0 translate-x-1/3 -translate-y-1/3 w-24 h-24 bg-primary/10 rounded-full" />
@@ -165,7 +165,7 @@ export default function Dashboard() {
             <p className="text-muted-foreground">No contests available at the moment.</p>
           )}
         </CardContent>
-        <CardFooter className="relative">
+        {(latestContest?.status === 'ACTIVE') && <CardFooter className="relative">
           {latestContest && (
             <Button size="lg" className="w-full sm:w-auto" asChild>
               <Link href={`/contest/${latestContest.id}`}>
@@ -173,7 +173,7 @@ export default function Dashboard() {
               </Link>
             </Button>
           )}
-        </CardFooter>
+        </CardFooter>}
       </Card>
 
       {/* Group Members Section */}
@@ -195,11 +195,11 @@ export default function Dashboard() {
             </TableHeader>
             {userStats.groupName && <TableBody>
               {userStats.groupMembers
-                .sort((a, b) => b.points - a.points)
+                .sort((a, b) => b.individualPoints - a.individualPoints)
                 .map((member, index) => (
                   <TableRow key={index}>
-                    <TableCell className="font-medium">{member.name}</TableCell>
-                    <TableCell>{member.points}</TableCell>
+                    <TableCell className="font-medium">{member.username}</TableCell>
+                    <TableCell>{member.individualPoints}</TableCell>
                     <TableCell className="text-right">
                       <span className={cn(
                         "px-2 py-1 rounded-full text-xs font-medium",

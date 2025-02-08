@@ -6,9 +6,9 @@ export async function POST(req: Request) {
   console.log(request)
   let contestId = 0
   try {
-    const isAdmin = await axios.post('/api/checkIfAdmin')
+    // const isAdmin = await axios.post('/api/checkIfAdmin')
 
-    if(!isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 430 });
+    // if(!isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 430 });
     const lastContest = await prisma.contest.findFirst({
       orderBy: { id: 'desc' } 
     });

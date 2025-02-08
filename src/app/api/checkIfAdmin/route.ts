@@ -8,27 +8,30 @@ export async function POST(req: Request) {
   try {
     const session = await getServerSession();
 
+    
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
+    console.log(1)
+    
     const userEmail = session?.user?.email;
     if (!userEmail) {
       return NextResponse.json({ error: 'User email not found' }, { status: 404 });
     }
-
-    // Fetch user from DB
+    
     const user = await prisma.user.findUnique({
       where: { email: userEmail },
-      select: { username: true }, // Assuming username is stored in "name"
+      select: { username: true }, 
     });
     if (!user || !user.username) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
-
+    console.log(1)
     const isAdmin = admins.includes(user.username);
 
 
+    console.log(1)
+    console.log(isAdmin)
     return NextResponse.json({ isAdmin }, { status: 200 });
   } catch (error) {
     console.error('Error checking admin status:', error);

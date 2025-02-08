@@ -3,11 +3,13 @@ import axios from "axios";
 import { NextResponse } from "next/server";
 
 
-export async function GET() {
+export async function POST() {
     try {
-      const isAdmin = await axios.post('/api/checkIfAdmin')
+    //   const response = await axios.post('/api/checkIfAdmin')
+    //   console.log(1)
 
-      if(!isAdmin) return NextResponse.json({ questions: [] }, { status: 430 });
+    // if(!response.data.isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 430 });
+
       const questions = await prisma.question.findMany({
         include: {
           questionTags: true,
@@ -16,12 +18,11 @@ export async function GET() {
           createdAt: 'desc'
         }
       });
-      console.log(questions[1])
+
       return NextResponse.json({ questions }, { status: 200 })
-    } catch (error) {
-    // @ts-ignore
-      console.log(error.message)
-      return NextResponse.json({ status: 400 })
+    } catch (error: any) {
+      console.log(error)
+      return NextResponse.json({ error }, { status: 400 })
     }
   
 }

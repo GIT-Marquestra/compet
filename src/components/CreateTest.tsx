@@ -1,10 +1,11 @@
 "use client"
 import axios from "axios";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 const CreateTestForm = () => {
     const [lastContestNum, setLastContestNum] = useState(0)
+    const [show, setShow] = useState(false)
   const [questions, setQuestions] = useState<
     { leetcodeUrl: string; codeforcesUrl: string; difficulty: string; points: number; slug: string }[]
   >([]);
@@ -23,6 +24,25 @@ const CreateTestForm = () => {
     Medium: 80,
     Hard: 120,
   };
+
+  useEffect(() => {
+
+    const checkAdmin = async () => {
+      try {
+        const response = await axios.post('/api/checkIfAdmin')
+
+        if(!response.data.isAdmin) return 
+
+        if(response.data.isAdmin) setShow(true)
+
+      } catch (error) {
+        
+      }
+    }
+
+    checkAdmin()
+
+  }, [])
 
   const extractLeetCodeSlug = (url: string) => {
     const match = url.match(/leetcode\.com\/problems\/([^\/]+)/);

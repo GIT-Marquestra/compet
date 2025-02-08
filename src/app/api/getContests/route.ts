@@ -9,12 +9,10 @@ export async function GET() {
             },
         });
 
-        const nowString = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
-
         const nowO = new Date();
 
-        const offset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
-        const now = new Date(nowO.getTime() + offset); // Adjust UTC time to IST
+        const offset = 5.5 * 60 * 60 * 1000; 
+        const now = new Date(nowO.getTime() + offset); 
         const latestContest = contests[0];
         
         if (!latestContest) {
@@ -22,7 +20,6 @@ export async function GET() {
         }
 
         if (now > latestContest.startTime && now < latestContest.endTime) {
-            console.log('JO')
             await prisma.contest.update({
                 where: {
                     id: latestContest.id,
@@ -33,6 +30,7 @@ export async function GET() {
             });
             console.log(`Updated contest ${latestContest.id} to active`);
         }
+
         const contests2 = await prisma.contest.findMany({
             orderBy: {
                 id: "desc",

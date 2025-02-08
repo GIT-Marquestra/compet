@@ -9,15 +9,14 @@ datasource db {
 }
 
 
-// User model improvements
 
 model User {
   id                  String              @id @default(uuid())
   username            String              @unique
   email               String              @unique
   password            String
-  leetcodeUsername    String?             // Made optional since user might only have CodeForces
-  codeforcesUsername  String?             // Made optional since user might only have LeetCode
+  leetcodeUsername    String?           
+  codeforcesUsername  String?         
   section            String
   enrollmentNum      String              @unique
   profileUrl         String?
@@ -27,10 +26,12 @@ model User {
   individualPoints   Int                 @default(0)
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
+  applications  GroupApplication[] @relation("GroupApplications")
   coordinatedGroup   Group?              @relation("GroupCoordinator") 
   
   @@index([groupId]) 
 }
+
 
 
 model Group {
@@ -43,23 +44,24 @@ model Group {
   groupPoints       Int                 @default(0)
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
+  applications      GroupApplication[]  @relation("GroupApplications")
 
   @@index([coordinatorId])
 }
 
-// Rest of the models remain the same
+
 model Contest {
   id                Int                 @id @default(autoincrement())
-  startTime         DateTime            // Added start time
-  endTime           DateTime            // Added end time
-  status            ContestStatus       @default(UPCOMING) // Added status enum
+  startTime         DateTime
+  endTime           DateTime            
+  status            ContestStatus       @default(UPCOMING) 
   questions         QuestionOnContest[]
   submissions       Submission[]
   attemptedGroups   GroupOnContest[]
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
 
-  @@index([status, startTime]) // Index for filtering active contests
+  @@index([status, startTime]) 
 }
 
 enum ContestStatus {
@@ -75,24 +77,24 @@ model GroupOnContest {
   contest           Contest             @relation(fields: [contestId], references: [id])
   group             Group               @relation(fields: [groupId], references: [id])
   score             Int                 @default(0)
-  rank              Int?                // Added rank field
+  rank              Int?                
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
 
   @@unique([groupId, contestId])
-  @@index([contestId, score]) // Index for leaderboard queries
+  @@index([contestId, score]) 
 }
 
 model Question {
   id                String              @id @default(uuid())
-  leetcodeUrl       String?             // Made optional
-  codeforcesUrl     String?             // Made optional
-  difficulty        Difficulty          // Changed to enum
+  leetcodeUrl       String?         
+  codeforcesUrl     String?          
+  difficulty        Difficulty       
   points            Int
-  questionTags      QuestionTag[]       // Changed from string[] to relation
+  questionTags      QuestionTag[]     
   slug              String              @unique
   contests          QuestionOnContest[]
-  submissions       Submission[]        // Added direct relation to submissions
+  submissions       Submission[]        
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
 
@@ -132,17 +134,17 @@ model QuestionOnContest {
 model Submission {
   id                String              @id @default(uuid())
   userId            String
-  questionId        String              // Added direct relation to question
+  questionId        String             
   contestId         Int
   score             Int                 @default(0)
-  status            SubmissionStatus    // Added submission status
+  status            SubmissionStatus   
   user              User                @relation(fields: [userId], references: [id])
   question          Question            @relation(fields: [questionId], references: [id])
   contest           Contest             @relation(fields: [contestId], references: [id])
   createdAt         DateTime            @default(now())
 
-  @@index([userId, contestId]) // Index for user's contest submissions
-  @@index([contestId, score]) // Index for contest leaderboard
+  @@index([userId, contestId]) 
+  @@index([contestId, score]) 
 }
 
 enum SubmissionStatus {
@@ -153,4 +155,25 @@ enum SubmissionStatus {
   MEMORY_LIMIT_EXCEEDED
   RUNTIME_ERROR
   COMPILATION_ERROR
+}
+
+model GroupApplication {
+  id            String          @id @default(uuid())
+  status        ApplicationStatus @default(PENDING)
+  applicantId   String
+  groupId       String
+  applicant     User            @relation("GroupApplications", fields: [applicantId], references: [id])
+  group         Group           @relation("GroupApplications", fields: [groupId], references: [id])
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@unique([applicantId, groupId])
+  @@index([groupId, status])
+  @@index([applicantId, status])
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
 }

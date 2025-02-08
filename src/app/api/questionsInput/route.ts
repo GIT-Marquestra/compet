@@ -7,38 +7,54 @@ export async function POST(req: Request){
         const request = await req.json()
         const data = JSON.parse(request.body)
         console.log('Data: ', data)
-        const res = await prisma.question.createMany({
-          data: data.map((q: any) => ({
-            leetcodeUrl: q.platform === "Leetcode" ? q.leetcodeUrl : null,
-            codeforcesUrl: q.platform === "Codeforces" ? q.codeforcesUrl : null,
-            difficulty: q.difficulty as Difficulty,
-            points: q.points,
-            slug: q.slug ? q.slug : 'slug',
-        })),
-            skipDuplicates: true
-        })
-        console.log(res)
-        for (const question of data) {
-          if (question.tags && question.tags.length > 0) {
-              await prisma.question.update({
-                  where: { slug: question.slug },
-                  data: {
-                      questionTags: {
-                          connectOrCreate: question.tags.map((tagName: string) => ({
-                              where: { name: tagName },
-                              create: { name: tagName }
-                          }))
-                      }
-                  }
-              })
-          }
-      }
-        
-        return NextResponse.json({ status: 200 })
-    } catch (error) {
-        // @ts-ignore
-        console.log("Error message: ", error.message)
-        return NextResponse.json({ error: "Error" }, { status: 400 })
-    }
 
+        // Extract all unique tags
+        const allTags = [...new Set(data.flatMap((q: any) => q.tags || []))];
+
+        // Ensure all tags exist before linking them to questions
+        await prisma.$transaction(
+            allTags.map((tagName: any) => 
+                prisma.questionTag.upsert({
+                    where: { name: tagName },
+                    update: {},
+                    create: { name: tagName }
+                })
+            )
+        );
+
+        // Create questions
+        const res = await prisma.question.createMany({
+            data: data.map((q: any) => ({
+                leetcodeUrl: q.platform === "Leetcode" ? q.leetcodeUrl : null,
+                codeforcesUrl: q.platform === "Codeforces" ? q.codeforcesUrl : null,
+                difficulty: q.difficulty as Difficulty,
+                points: q.points,
+                slug: q.slug ? q.slug : 'slug',
+            })),
+            skipDuplicates: true
+        });
+
+        console.log(res);
+
+        // Link tags to the questions
+        for (const question of data) {
+            if (question.tags && question.tags.length > 0) {
+                await prisma.question.update({
+                    where: { slug: question.slug },
+                    data: {
+                        questionTags: {
+                            connect: question.tags.map((tagName: string) => ({
+                                name: tagName
+                            }))
+                        }
+                    }
+                });
+            }
+        }
+
+        return NextResponse.json({ status: 200 });
+    } catch (error) {
+        console.error("Error message: ", error);
+        return NextResponse.json({ error: "Error" }, { status: 400 });
+    }
 }

@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { revalidatePath } from 'next/cache';
 
 interface User {
   id: string;
@@ -20,7 +21,9 @@ interface Group {
   name: string;
   coordinator: User;
   coordinatorId: string;
-  members: User[];
+  _count: {
+    members: number
+  }
   groupPoints: number;
 }
 
@@ -39,7 +42,7 @@ const GroupManagement = () => {
   const [error, setError] = useState('');
   const [existingGroups, setExistingGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(false);
-  const [userGroups, setUserGroups] = useState<Group[]>([]);
+  const [userGroups, setUserGroups] = useState<Group>();
   const router = useRouter();
   const { data: session, status } = useSession();
 
@@ -79,9 +82,15 @@ const GroupManagement = () => {
         groupId,
         userEmail: session?.user?.email,
       });
-
-      if (response.status === 200) {
+      console.log('Response: ', response)
+      if(response.data.status === 400){
+        toast.error('You have already applied!')
+      }
+      if (response.status === 201) {
         toast.success('Application submitted successfully!');
+      }
+      if (response.data.status === 410) {
+        toast.error('You are already part of this Group!');
       }
     } catch (err) {
       const error = err as Error;
@@ -95,10 +104,11 @@ const GroupManagement = () => {
         groupId,
         userEmail: session?.user?.email,
       });
-
+      console.log('Leave: ', response)
       if (response.status === 200) {
         toast.success('Left group successfully!');
-        fetchUserGroups(); // Refresh user groups
+        revalidatePath('/groupCreation')
+        fetchUserGroups(); 
       }
     } catch (err) {
       const error = err as Error;
@@ -117,6 +127,7 @@ const GroupManagement = () => {
         }
       });
       console.log(response)
+      
       setExistingGroups(response.data.groups);
       setShowExistingGroups(true);
       setShowNewGroupForm(false);
@@ -130,10 +141,15 @@ const GroupManagement = () => {
 
   const fetchUserGroups = async () => {
     try {
-      const response = await axios.get('/api/groups/user', {
-        params: { email: session?.user?.email }
+      const response = await axios.post('/api/groups', {
+        body: {
+          userEmail: session?.user?.email 
+        }
       });
-      setUserGroups(response.data.groups);
+      console.log(response.data)
+      if(response.data.userGroup){
+        setUserGroups(response.data.userGroup);
+      }
     } catch (err) {
       const error = err as Error;
       toast.error('Failed to fetch your groups');
@@ -154,23 +170,23 @@ const GroupManagement = () => {
           )}
           
           {/* My Groups Section */}
-          {userGroups.length > 0 && (
+          {userGroups && (
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">My Groups</h3>
-              {userGroups.map((group) => (
-                <div key={group.id} className="flex items-center justify-between p-4 border rounded">
+             
+                <div key={userGroups.id} className="flex items-center justify-between p-4 border rounded">
                   <div>
-                    <h3 className="font-medium">{group.name}</h3>
-                    <p className="text-sm text-gray-500">Members: {group.members._count.members}</p>
+                    <h3 className="font-medium">{userGroups.name}</h3>
+                    <p className="text-sm text-gray-500">Members: {userGroups._count.members}</p>
                   </div>
                   <Button 
                     variant="destructive" 
-                    onClick={() => handleLeaveGroup(group.id)}
+                    onClick={() => handleLeaveGroup(userGroups.id)}
                   >
                     Leave Group
                   </Button>
                 </div>
-              ))}
+             
             </div>
           )}
 
@@ -212,19 +228,19 @@ const GroupManagement = () => {
                 <div key={group.id} className="flex items-center justify-between p-4 border rounded">
                   <div>
                     <h3 className="font-medium">{group.name}</h3>
-                    <p className="text-sm text-gray-500">Members: {group.members.length}</p>
+                    <p className="text-sm text-gray-500">Members: {group._count.members}</p>
                     <p className="text-sm text-gray-500">
                       Coordinator: {group.coordinator.username}
                     </p>
                   </div>
-                  {!userGroups.some(g => g.id === group.id) && (
+                  
                     <Button 
                       variant="outline" 
                       onClick={() => handleApply(group.id)}
                     >
                       Apply
                     </Button>
-                  )}
+                  
                 </div>
               ))}
               {existingGroups.length === 0 && (

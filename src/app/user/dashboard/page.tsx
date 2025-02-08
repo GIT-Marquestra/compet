@@ -21,6 +21,7 @@ import Link from 'next/link';
 import { redirect } from 'next/dist/server/api-utils';
 import toast from 'react-hot-toast';
 import { getDuration } from '@/serverActions/getDuration';
+import { useSession } from 'next-auth/react';
 
 interface Contest {
   id: string;
@@ -45,6 +46,7 @@ export default function Dashboard() {
         updatedAt: Date
       }[]>([])
   // Sample data - replace with actual data fetching
+  const { data: session, status } = useSession()
   useEffect(() => {
     const func = async () => {
 
@@ -56,8 +58,12 @@ export default function Dashboard() {
           toast.error('Unable to Fetch Questions')
         }
     }
-
-    func()
+    if(session?.user?.email){
+      func()
+    } else {
+      // todo 
+      console.log('not authenticate')
+    }
 
   }, [])
 

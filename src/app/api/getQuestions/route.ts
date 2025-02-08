@@ -9,6 +9,9 @@ export async function GET() {
         include: {
           questionTags: true, // Include related tags
         },
+        orderBy:{
+          createdAt: 'desc'
+        }
       });
       console.log(questions[1])
       return NextResponse.json({ questions }, { status: 200 })

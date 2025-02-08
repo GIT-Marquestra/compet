@@ -19,15 +19,32 @@ export async function POST(
       where: { email: request.body.userEmail },
       include: { group: true }
     });
-
+    console.log(user)
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
+    let userGroup = null
+    if (user.group) {
+      userGroup = await prisma.group.findUnique({
+        where:{
+          id: user.group.id
+        },
+        include:{
+          coordinator:{
+            select: {
+              username: true,
+              email: true
+            }
 
-    // if (user.groupId) {
-    //   return NextResponse.json({ error: 'User is already a member of a group' }, { status: 400 });
-    // }
-
+          },
+          _count: {
+            select: { members: true }
+          }
+        }
+        
+      })
+    }
+    console.log(userGroup)
     // Fetch all groups with their member count
     const groups = await prisma.group.findMany({
       include: {
@@ -43,7 +60,7 @@ export async function POST(
       }
     });
 
-    return NextResponse.json({ groups }, { status: 200 });
+    return NextResponse.json({ groups, userGroup }, { status: 200 });
   } catch (error: any) {
     console.log(error.message)
     return NextResponse.json({ error: 'Failed to fetch groups' }, { status: 500 });

@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import { ThemeProvider } from "@/components/theme-provider"
 import { SessionProvider } from "next-auth/react";
 import SessionProviderWrapper from "@/components/SessionProviderWrapper";
+import { QueryProvider } from '@/components/QueryWrapper';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,12 +39,13 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
+            <QueryProvider>
       
         <SessionProviderWrapper>
         <header className="absolute w-full"><Navbar/></header>
         <main className="w-full flex justify-center min-h-screen overflow-hidden">
           {/* <SessionProvider> */}
-          <div className="w-[95%] max-w-7xl h-screen overflow-hidden">
+          <div className="w-[95%] max-w-7xl">
             
               {children}
         <Toaster/>
@@ -51,6 +53,7 @@ export default function RootLayout({
           {/* </SessionProvider> */}
         </main>
         </SessionProviderWrapper>
+        </QueryProvider>
       <footer></footer>
       </ThemeProvider>
       </body>

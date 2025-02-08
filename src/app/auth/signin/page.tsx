@@ -15,14 +15,20 @@ export default function SignIn() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = await signIn('credentials', {
-      username,
-      password,
-      redirect: true,
-      callbackUrl: '/'
-    });
-    if(result){
-      toast.success('Signed In')
+    try {
+      const result = await signIn('credentials', {
+        username,
+        password,
+        redirect: true,
+        callbackUrl: '/'
+      });
+      if(result?.error){
+        toast.error('Sign in Failed, check your credentials')
+      } else {
+        toast.success('Signed In')
+      }
+    } catch (error) {
+      toast.error("An error occurred during sign-in.");
     }
   };
 

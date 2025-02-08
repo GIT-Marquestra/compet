@@ -11,13 +11,13 @@ export async function POST(
 
   try {
     
-    if (!request?.body.userEmail) {
+    if (!request?.userEmail) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get the current user
     const user = await prisma.user.findUnique({
-      where: { email: request.body.userEmail },
+      where: { email: request.userEmail },
       include: { group: true }
     });
 
@@ -31,7 +31,7 @@ export async function POST(
     }
 
     // Create new group and update user
-    const { name } = request.body;
+    const { name } = request;
 
     const group = await prisma.$transaction(async (tx) => {
       // Create the group

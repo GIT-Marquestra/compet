@@ -1,5 +1,3 @@
-//@ts-nocheck
-import { NextApiRequest, NextApiResponse } from 'next';
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma'; // Adjust the import based on your project structure
 
@@ -10,7 +8,7 @@ interface GroupLeaderboardEntry {
   coordinatorName: string;
 }
 
-export async function POST(req: Request) {
+export async function POST() {
   try {
     // Fetch all groups with their points and coordinator details
     const groupsWithScores = await prisma.group.findMany({

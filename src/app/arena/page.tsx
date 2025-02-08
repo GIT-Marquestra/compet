@@ -1,4 +1,3 @@
-//@ts-nocheck
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -92,7 +91,6 @@ const QuestionSolving = () => {
   const [isScoreUpdating, setIsScoreUpdating] = useState<boolean>(false);
   const [resLeet, setResLeet] = useState<string>();
   const [resCodef, setResCodef] = useState<string>();
-  const { data: session, status } = useSession();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>("ALL");
@@ -151,8 +149,7 @@ const QuestionSolving = () => {
     setIsVerifying({ ...isVerifying, [questionId]: true });
     try {
       if (platform === "Leetcode") {
-        const response = await axios.post('/api/user/leetcode/username', { userEmail: session?.user?.email })
-        const res = await fetchLatestSubmissionsLeetCode(response.data.leetcodeUsername);
+        const res = await fetchLatestSubmissionsLeetCode(lUsername);
         if(!resLeet) return
         if (res?.recentSubmissionList) {
           let solved = res.recentSubmissionList.find(
@@ -179,8 +176,7 @@ const QuestionSolving = () => {
           }
         }
       } else {
-        const response = await axios.post('/api/user/codeforces/username', { userEmail: session?.user?.email })
-        const res = await fetchLatestSubmissionsCodeForces(response.data.codeforcesUsername);
+        const res = await fetchLatestSubmissionsCodeForces(cUsername);
         if(!resCodef) return
         if (res) {
           let solved = res.find(

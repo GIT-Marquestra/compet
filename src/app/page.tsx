@@ -1,4 +1,4 @@
-//@ts-nocheck
+
 import HeroSection from "@/components/Hero";
 import Signup from "@/components/Signup";
 

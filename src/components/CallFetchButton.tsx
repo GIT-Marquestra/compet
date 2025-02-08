@@ -1,4 +1,4 @@
-//@ts-nocheck
+
 "use client"
 import { fetchLatestSubmissionsCodeForces, fetchLatestSubmissionsLeetCode } from '@/serverActions/fetch'
 import React, { useState } from 'react'

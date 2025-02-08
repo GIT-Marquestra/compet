@@ -1,6 +1,4 @@
-//@ts-nocheck
 import prisma from "@/lib/prisma";
-import axios from "axios";
 import { NextResponse } from "next/server";
 
 

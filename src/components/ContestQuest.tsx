@@ -1,4 +1,3 @@
-//@ts-nocheck
 'use client'
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
@@ -80,7 +79,7 @@ const ContestQuest: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const params = useParams();
   const id = params.num?.[0];
-  const [username, setUsername] = useState('')
+  const [setUsername] = useState('')
   const [loadingStartTest, setloadingStartTest] = useState(false)
   const [resLeet, setResLeet] = useState<string>();
   const [resCodef, setResCodef] = useState<string>();
@@ -158,7 +157,6 @@ const ContestQuest: React.FC = () => {
         const resC = await axios.post('/api/user/codeforces/username')
         setCUsername(resC.data.codeforcesUsername)
         setLUsername(resL.data.leetcodeUsername)
-        setUsername(usernameResponse.data.username);
       } catch (error) {
         console.error('Error fetching user data:', error);
       }

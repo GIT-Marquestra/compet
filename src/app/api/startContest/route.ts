@@ -1,10 +1,9 @@
-//@ts-nocheck
 import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 import { getDurationUlt } from '@/serverActions/getDuration';
 import { getServerSession } from 'next-auth';
 
-export async function POST(req: Request) {
+export async function POST() {
     try {
         const session = await getServerSession()
         const userEmail = session?.user?.email

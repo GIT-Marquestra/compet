@@ -1,4 +1,3 @@
-//@ts-nocheck
 import AllQuestions from '@/components/AllQuestions'
 import React from 'react'
 

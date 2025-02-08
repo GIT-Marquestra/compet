@@ -41,7 +41,7 @@ export const authOptions: AuthOptions = {
       });
 
       if (dbUser) {
-        //@ts-expect-error
+        //@ts-expect-error : it important here
         session.user.id = dbUser.id; // Store userId in session
       }
 

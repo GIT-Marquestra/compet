@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -46,10 +45,10 @@ const GroupManagement = () => {
         setUserGroups(response.data.userGroup);
       }
     } catch (err) {
-      const error = err as Error;
+      console.log(err)
       toast.error('Failed to fetch your groups');
     }
-}, []);
+}, [session?.user?.email]);
 
   useEffect(() => {
     if (session?.user?.email) {

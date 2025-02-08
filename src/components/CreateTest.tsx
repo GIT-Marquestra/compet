@@ -35,6 +35,7 @@ const CreateTestForm = () => {
 
 
       } catch (error) {
+        console.log(error)
         
       }
     }
@@ -78,7 +79,6 @@ const CreateTestForm = () => {
         console.log(lastContestNum)
         console.log('Response: ', res)
     } catch (error) {
-        // @ts-ignore
         console.log("Error in handleAddQuestion: ", error)
     }
     

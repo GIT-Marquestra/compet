@@ -111,6 +111,63 @@ const ContestQuest: React.FC = () => {
     requestAnimationFrame(animate);
   };
 
+  const handleVerify = useCallback(async (
+    platform: 'Leetcode' | 'Codeforces', 
+    problemName: string, 
+    questionId: string,
+    points: number
+  ): Promise<void> => {
+    if (verifiedProblems.has(questionId)) {
+      toast.error('Problem already verified!');
+      return;
+    }
+    try {
+      setIsVerifying({ ...isVerifying, [questionId]: true });
+      if (platform === "Leetcode") {
+        
+        const res = await fetchLatestSubmissionsLeetCode(lusername);
+
+        
+        if(!resLeet) return 
+        if (res?.recentSubmissionList) {
+          const solved = res.recentSubmissionList.find(
+            (p: LeetCodeSubmission) => p.titleSlug === problemName && p.statusDisplay === 'Accepted' && parseInt(p.timestamp) > parseInt(resLeet)
+          );
+          console.log(solved)
+          if (solved) {
+            setVerifiedProblems(prev => new Set([...prev, questionId]));
+            animateScoreUpdate(score, score + points);
+            toast.success(`Problem verified! +${points} points`);
+          } else {
+            toast.error('No accepted submission found');
+          }
+        }
+      } else {
+        const res = await fetchLatestSubmissionsCodeForces(cusername);
+        if (res) {
+          const solved = res.find(//@ts-expect-error : it important here
+            (p: CodeForcesSubmission) => p.problem.name === problemName && p.verdict === 'OK' && p.creationTimeSeconds > parseInt(resCodef)
+          );
+          if (solved) {
+            setVerifiedProblems(prev => new Set([...prev, questionId]));
+            animateScoreUpdate(score, score + points);
+            toast.success(`Problem verified! +${points} points`);
+          } else {
+            toast.error('No accepted submission found');
+          }
+        }
+      }
+
+
+
+    } catch (error) {
+      toast.error('Error verifying submission');
+      console.error('Verification error:', error);
+    } finally {
+      setIsVerifying({ ...isVerifying, [questionId]: false });
+    }
+  }, []);
+
   const handleEndTest = useCallback(async (): Promise<void> => {
     setIsEndingTest(true);
     const loader = toast.loading('Verifying all questions...');
@@ -146,7 +203,7 @@ const ContestQuest: React.FC = () => {
       setIsEndingTest(false);
       toast.dismiss(loader)
     }
-  }, [])
+  }, [handleVerify])
 
 
   useEffect(() => {
@@ -243,7 +300,7 @@ const ContestQuest: React.FC = () => {
   };
 
   const getDifficultyColor = (difficulty: Difficulty): string => {
-    //@ts-expect-error
+    //@ts-expect-error : it important here
     const colors: Record<Difficulty, string> = {
       EASY: 'bg-green-500/10 text-green-500',
       MEDIUM: 'bg-yellow-500/10 text-yellow-500',
@@ -252,62 +309,7 @@ const ContestQuest: React.FC = () => {
     return colors[difficulty] || 'bg-gray-500/10 text-gray-500';
   };
 
-  const handleVerify = async (
-    platform: 'Leetcode' | 'Codeforces', 
-    problemName: string, 
-    questionId: string,
-    points: number
-  ): Promise<void> => {
-    if (verifiedProblems.has(questionId)) {
-      toast.error('Problem already verified!');
-      return;
-    }
-    try {
-      setIsVerifying({ ...isVerifying, [questionId]: true });
-      if (platform === "Leetcode") {
-        
-        const res = await fetchLatestSubmissionsLeetCode(lusername);
-
-        
-        if(!resLeet) return 
-        if (res?.recentSubmissionList) {
-          const solved = res.recentSubmissionList.find(
-            (p: LeetCodeSubmission) => p.titleSlug === problemName && p.statusDisplay === 'Accepted' && parseInt(p.timestamp) > parseInt(resLeet)
-          );
-          console.log(solved)
-          if (solved) {
-            setVerifiedProblems(prev => new Set([...prev, questionId]));
-            animateScoreUpdate(score, score + points);
-            toast.success(`Problem verified! +${points} points`);
-          } else {
-            toast.error('No accepted submission found');
-          }
-        }
-      } else {
-        const res = await fetchLatestSubmissionsCodeForces(cusername);
-        if (res) {
-          const solved = res.find(//@ts-expect-error
-            (p: CodeForcesSubmission) => p.problem.name === problemName && p.verdict === 'OK' && p.creationTimeSeconds > parseInt(resCodef)
-          );
-          if (solved) {
-            setVerifiedProblems(prev => new Set([...prev, questionId]));
-            animateScoreUpdate(score, score + points);
-            toast.success(`Problem verified! +${points} points`);
-          } else {
-            toast.error('No accepted submission found');
-          }
-        }
-      }
-
-
-
-    } catch (error) {
-      toast.error('Error verifying submission');
-      console.error('Verification error:', error);
-    } finally {
-      setIsVerifying({ ...isVerifying, [questionId]: false });
-    }
-  };
+  
 
   const handleStartTest = async (): Promise<void> => {
     try {
@@ -331,7 +333,7 @@ const ContestQuest: React.FC = () => {
       const codefTime = resCodef[0].creationTimeSeconds
       setResCodef(codefTime)
       if(resCodef) setResCodef(resCodef) 
-      //@ts-expect-error
+      //@ts-expect-error : it important here
       setTimeLeft(response.data.remainingTime + 60)
         
       console.log(response.status)

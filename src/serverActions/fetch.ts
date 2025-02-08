@@ -29,7 +29,7 @@ export async function fetchLatestSubmissionsCodeForces(username: string){
         console.log(username)
         console.log('hi')
         const userStats = await CodeforcesAPI.call("user.status", { handle: username });
-        //@ts-expect-error
+        //@ts-expect-error : it important here
         return userStats.result
     } catch (error) {
         console.log("Error: ", error)

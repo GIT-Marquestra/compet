@@ -97,6 +97,7 @@ const AdminGroupCreator = () => {
       setCoordinator(null);
       setGroupName('');
     } catch (err) {
+      console.log(err)
       setError('Failed to create group');
     } finally {
       setIsSubmitting(false);

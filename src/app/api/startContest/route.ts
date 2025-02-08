@@ -6,7 +6,7 @@ interface Contest {
     id: number,
     startTime: string,
     endTime: string,
-    questions: Object[]
+    questions: object[]
 }
 
 export async function POST() {

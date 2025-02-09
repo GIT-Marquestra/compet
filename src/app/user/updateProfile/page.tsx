@@ -208,11 +208,11 @@ const ProfilePage = () => {
                       <SelectValue placeholder="Select your section" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="A1">A1</SelectItem>
-                      <SelectItem value="A2">A2</SelectItem>
-                      <SelectItem value="A3">A3</SelectItem>
-                      <SelectItem value="B1">B1</SelectItem>
-                      <SelectItem value="B2">B2</SelectItem>
+                      <SelectItem value="A">A</SelectItem>
+                      <SelectItem value="B">B</SelectItem>
+                      <SelectItem value="C">C</SelectItem>
+                      <SelectItem value="D">D</SelectItem>
+                      <SelectItem value="E">E</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

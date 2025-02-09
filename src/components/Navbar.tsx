@@ -21,7 +21,8 @@ import {
   Swords, 
   LogOut, 
   UserCircle,
-  ShieldCheck 
+  ShieldCheck,
+  UserCog 
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -120,6 +121,10 @@ const Navbar = () => {
                 <DropdownMenuItem onClick={() => signOut()}>
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Sign out</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <UserCog className="mr-2 h-4 w-4"/>
+                  <Link href={'/user/updateProfile'}><span>Update Profile</span></Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
